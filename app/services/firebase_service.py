@@ -1,13 +1,11 @@
 import firebase_admin
 from firebase_admin import credentials, auth
-from config import FIREBASE_CREDENTIALS
+from app.config import FIREBASE_CREDENTIALS
 from fastapi import HTTPException, status
 import json
 
-#testing 
 
 firebase_json = json.loads(FIREBASE_CREDENTIALS)  
-
 
 # Initialize Firebase app only once
 if not firebase_admin._apps:

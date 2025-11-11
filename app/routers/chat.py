@@ -1,16 +1,17 @@
+
 from typing import List
-from database import get_db
+from app.database import get_db
 from fastapi import APIRouter,Depends, HTTPException
-from models.chat import Chat
-from models.user import User
-from models.message import Message
-from services.chatbot_service import Ollama
-from services.auth_service import get_current_user
+from app.models.chat import Chat
+from app.models.user import User
+from app.models.message import Message
+from app.services.chatbot_service import Ollama
 from sqlalchemy.orm import Session
-from schemas.message import MessageCreate
+from app.schemas.message import MessageCreate
 from sqlalchemy import desc
-from schemas.chat import ChatResponse
-from schemas.message import MessageResponse
+from app.schemas.chat import ChatResponse
+from app.schemas.message import MessageResponse
+from app.services.auth_service import get_current_user
 
 
 router = APIRouter(

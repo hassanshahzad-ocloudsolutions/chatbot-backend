@@ -1,12 +1,13 @@
 from fastapi import HTTPException, Depends, Header
-from database import get_db
+from app.database import get_db
 from sqlalchemy.orm import Session
-from models.user import User
-from services.firebase_service import verify_firebase_token
+from app.models.user import User
+from app.services.firebase_service import verify_firebase_token
 
 #not need to include or register in routes as it is not our an endpoint but will be used by other end points
 
 def get_current_user(authorization: str = Header(...), db: Session = Depends(get_db)):
+
     """
     Get user from Firebase token in Authorization header
     """
@@ -23,8 +24,10 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
         raise HTTPException(status_code=401, detail="Invalid Firebase token")
 
     user = db.query(User).filter(User.uid == uid).first()
+
     if not user:
         user = User(uid=uid, email=email)
+        print(user)
         db.add(user)
         db.commit()
         db.refresh(user)
