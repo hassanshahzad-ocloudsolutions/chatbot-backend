@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from database import Base, engine
 from models import user, chat, message
-from routers import auth
+from routers import chat
 
 app = FastAPI()
 
@@ -9,4 +9,4 @@ app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 
-app.include_router(auth.route_auth)
+app.include_router(chat.router)

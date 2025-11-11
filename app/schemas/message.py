@@ -1,16 +1,15 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-class MessageBase(BaseModel):
-    role: str  # "user" or "assistant"
+class MessageCreate(BaseModel):
     content: str
 
-class MessageCreate(MessageBase):
-    chat_id: int
-
-class MessageResponse(MessageBase):
+# Response schema
+class MessageResponse(BaseModel):
     id: int
     chat_id: int
+    role: str
+    content: str
     created_at: datetime
 
     class Config:
