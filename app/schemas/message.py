@@ -7,7 +7,6 @@ class MessageCreate(BaseModel):
 # Response schema
 class MessageResponse(BaseModel):
     id: int
-    chat_id: int
     role: str
     content: str
     created_at: datetime
