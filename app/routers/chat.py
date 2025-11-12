@@ -50,6 +50,23 @@ async def send_message(
     db.add(user_msg)
     db.commit()
 
+    if chat.title == "New Chat":
+        try:
+      
+            # For example, prompt the AI: "Generate a short title for this chat: ..."
+            ai_prompt = f"Generate a short, descriptive title for this chat based on this user message, keep as simple as possible: {request.content}"
+            chat_title = ollama_response(ai_prompt)  # AI generates the title
+            chat.title = chat_title
+            db.commit()
+            db.refresh(chat)
+            
+        except Exception as e:
+            # fallback: if AI fails, use first few words
+            first_words = request.content.strip().split()[:5]
+            chat.title = " ".join(first_words) + ("..." if len(first_words) < len(request.content.split()) else "")
+            db.commit()
+            db.refresh(chat)
+
     # Generate AI response from Ollama
     bot_response = ollama_response(request.content)
 
