@@ -5,7 +5,7 @@ from fastapi import APIRouter,Depends, HTTPException
 from app.models.chat import Chat
 from app.models.user import User
 from app.models.message import Message
-from app.services.chatbot_service import Ollama
+from app.services.chatbot_service import Ollama, OpenAi
 from sqlalchemy.orm import Session
 from app.schemas.message import MessageCreate
 from sqlalchemy import desc
@@ -21,6 +21,9 @@ router = APIRouter(
 
 def ollama_response(content):
     return Ollama().generate_response(content)
+
+def open_ai_response(content):
+    return OpenAi().generate_response(content)
 
 #the left side panel, start new chart button
 @router.post("/start")
@@ -55,7 +58,8 @@ async def send_message(
       
             # For example, prompt the AI: "Generate a short title for this chat: ..."
             ai_prompt = f"Generate a short, descriptive title for this chat based on this user message, keep as simple as possible: {request.content}"
-            chat_title = ollama_response(ai_prompt)  # AI generates the title
+            # chat_title = ollama_response(ai_prompt)  # AI generates the title ollama
+            chat_title = open_ai(ai_prompt) #openai
             chat.title = chat_title
             db.commit()
             db.refresh(chat)
@@ -68,7 +72,8 @@ async def send_message(
             db.refresh(chat)
 
     # Generate AI response from Ollama
-    bot_response = ollama_response(request.content)
+    # bot_response = ollama_response(request.content) ollama
+    bot_response = open_ai_response(request.content)
 
     # Store bot message
     bot_msg = Message(chat_id=chat_id, role="assistant", content=bot_response)

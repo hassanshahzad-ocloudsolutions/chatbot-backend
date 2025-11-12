@@ -2,6 +2,7 @@ import requests
 from dotenv import load_dotenv
 import os
 import json
+from openai import OpenAI
 from abc import ABC, abstractmethod
 
 load_dotenv()
@@ -13,7 +14,6 @@ class Provider(ABC):
 
 class Ollama(Provider):
 
-   
     def generate_response(self,prompt: str):
         """
         Sends the user prompt to Ollama Llama 3.2 local server and returns the response.
@@ -48,4 +48,27 @@ class Ollama(Provider):
 
         except requests.RequestException as e:
             return f"Ollama API error: {str(e)}"
+
+class OpenAi(Provider):
+    def generate_response(self,prompt: str):
+        api_key = os.getenv("OPENAI_API_KEY")
+        model = os.getenv("OPENAI_MODEL")
+        temperature = float(os.getenv("OPENAI_TEMPERATURE"))
+        client = OpenAI(api_key=api_key)
+
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=500,
+                temperature=temperature,
+            )
+
+            return response.choices[0].message.content.strip()
+
+        except Exception as e:
+            return f"OpenAI API error: {str(e)}"
 

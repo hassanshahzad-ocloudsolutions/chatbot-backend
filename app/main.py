@@ -15,8 +15,8 @@ app.include_router(chat.router)
 
 # Allow frontend origin
 origins = [
-    "http://localhost:8080",
-    "http://192.168.0.90:8080"
+    "http://localhost:8080", #local
+    "http://192.168.0.90:8080" #network
 ]
 
 app.add_middleware(
