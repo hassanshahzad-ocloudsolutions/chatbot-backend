@@ -31,7 +31,7 @@ def save_message_service(db:Session,chat_id,role,content)->Message:
     return msg
 
 def generate_title_service(db: Session, chat: Chat, user_message: str )->str:
-    ai_response = OpenAi().generate_response(f"Generate a short title: {user_message}")
+    ai_response = open_ai_response(f"Generate a short title: {user_message}")
     chat.title = ai_response
     db.commit()
     db.refresh(chat)
