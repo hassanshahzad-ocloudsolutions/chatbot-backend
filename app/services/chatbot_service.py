@@ -4,6 +4,7 @@ import os
 import json
 from openai import OpenAI
 from abc import ABC, abstractmethod
+from app.config import (OLLAMA_API, OLLAMA_MODEL,OLLAMA_TEMPERATURE,OPENAI_API, OPENAI_MODEL, OPENAI_TEMPERATURE)
 
 load_dotenv()
 
@@ -19,12 +20,12 @@ class Ollama(Provider):
         Sends the user prompt to Ollama Llama 3.2 local server and returns the response.
         Make sure Ollama is running locally on default port 11434.
         """
-        url = os.getenv("OLLAMA_API_URL") # type: ignore
+        url = OLLAMA_API # type: ignore
         payload = {
-            "model": os.getenv("OLLAMA_MODEL"),
+            "model": OLLAMA_MODEL,
             "prompt": prompt,
             "max_tokens": 5000,       # optional, adjust as needed
-            "temperature": os.getenv("OLLAMA_TEMPERATURE")     # optional, creativity of response
+            "temperature": OLLAMA_TEMPERATURE    # optional, creativity of response
         }
 
         try:
@@ -51,9 +52,9 @@ class Ollama(Provider):
 
 class OpenAi(Provider):
     def generate_response(self,prompt: str):
-        api_key = os.getenv("OPENAI_API_KEY")
-        model = os.getenv("OPENAI_MODEL")
-        temperature = float(os.getenv("OPENAI_TEMPERATURE"))
+        api_key = OPENAI_API
+        model = OPENAI_MODEL
+        temperature = float(OPENAI_TEMPERATURE)
         client = OpenAI(api_key=api_key)
 
         try:
