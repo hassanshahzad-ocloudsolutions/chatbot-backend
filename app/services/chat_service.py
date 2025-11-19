@@ -15,7 +15,7 @@ def open_ai_response(content):
     return OpenAi().generate_response(content)
 
 #routes business logics
-def create_chat_service(db: Session, user_id: int):
+def create_chat_service(db: Session, user_id: int)->Chat:
     return ChatRepository.create_chat(db, user_id)
 
 def get_chat_by_id_service(db:Session, chat_id:int, user_id)->Chat:
@@ -49,7 +49,7 @@ def fetch_chat_history_service(db:Session, user_id)->List[Chat]:
     chats = ChatRepository.get_all_chats(db, user_id)
     return chats
 
-def delete_chat_service(db: Session,chat_id, user_id):
+def delete_chat_service(db: Session,chat_id, user_id)->None:
     chat = ChatRepository.get_chat_by_id(db, chat_id, user_id)
     if not chat:
         raise ValueError("Chat not found")

@@ -17,9 +17,6 @@ class MessageRepository:
 
     @staticmethod
     def fetch_by_chat(db: Session, chat_id: int):
-        """
-        Fetch all messages for a specific chat, ordered by creation time.
-        """
         return (
             db.query(Message)
             .filter(Message.chat_id == chat_id)
