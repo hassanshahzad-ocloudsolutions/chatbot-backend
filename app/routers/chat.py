@@ -13,7 +13,7 @@ from app.schemas.message import MessageResponse
 from app.services.auth_service import get_current_user
 from app.services.chat_service import (create_chat_service,get_chat_by_id_service,
                                        save_message_service, generate_title_service,
-                                       bot_response_service, fetch_messages_service,
+                                       bot_response_service, fetch_messages_by_chat_service,
                                        fetch_chat_history_service, delete_chat_service)
 
 router = APIRouter(
@@ -65,8 +65,7 @@ async def get_messages(chat_id:int, db: Session = Depends(get_db), user: User = 
     chat = get_chat_by_id_service(db, chat_id=chat_id, user_id=user.uid)
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
-
-    messages = fetch_messages_service(db, chat_id)
+    messages = fetch_messages_by_chat_service(db, chat_id)
     return messages
 
 #left panel displaying the chat history of user
