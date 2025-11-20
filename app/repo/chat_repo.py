@@ -8,7 +8,7 @@ from app.models.chat import Chat
 class ChatRepository:
 
     @staticmethod
-    def create_chat(db: Session, user_id: int):
+    def create_chat(db: Session, user_id):
         chat = Chat(user_id=user_id, title="New Chat")
         db.add(chat)
         db.commit()
@@ -16,7 +16,7 @@ class ChatRepository:
         return chat
     
     @staticmethod
-    def get_chat_by_id(db: Session, chat_id: int, user_id: int):
+    def get_chat_by_id(db: Session, chat_id: int, user_id):
         return (
             db.query(Chat)
             .filter(Chat.id == chat_id, Chat.user_id == user_id)
