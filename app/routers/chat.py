@@ -51,7 +51,7 @@ async def send_message(
             raise e 
 
     # Generate AI response from Open AI
-    bot_response = bot_response_service(request.content)
+    bot_response = bot_response_service(db,chat_id,request.content)
 
     # Store bot message
     save_message_service(db,chat_id=chat_id, role="assistant", content=bot_response)

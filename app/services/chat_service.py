@@ -1,5 +1,5 @@
 from sqlalchemy import desc
-from app.services.chatbot_service import Ollama, OpenAi
+from app.services.chatbot_service import Ollama, OpenAi, LangChain
 from sqlalchemy.orm import Session
 from app.models.chat import Chat
 from app.models.message import Message
@@ -7,12 +7,6 @@ from typing import List
 from app.repo.chat_repo import ChatRepository
 from app.repo.message_repo import MessageRepository
 
-
-def ollama_response(content):
-    return Ollama().generate_response(content)
-
-def open_ai_response(content):
-    return OpenAi().generate_response(content)
 
 #routes business logics
 def create_chat_service(db: Session, user_id: int)->Chat:
@@ -32,14 +26,17 @@ def save_message_service(db:Session,chat_id,role,content)->Message:
     
 #The logic is mostly business logic: “generate a title for a chat using AI” so keep it here
 def generate_title_service(db: Session, chat: Chat, user_message: str )->str:
-    ai_response = open_ai_response(f"Generate a short title: {user_message}")
+    ai_response = bot_title_service(f"Generate a short title: {user_message}")
     chat.title = ai_response
     db.commit()
     db.refresh(chat)
     return chat.title
 
-def bot_response_service(prompt):
-    return OpenAi().generate_response(prompt)
+def bot_response_service(db, chat_id, prompt):
+    return LangChain().generate_response(db,chat_id,prompt)
+
+def bot_title_service(prompt):
+    return LangChain().generate_title(prompt)
 
 def fetch_messages_by_chat_service(db:Session, chat_id)->List[Message]:
     messages = MessageRepository.fetch_by_chat(db,chat_id)
