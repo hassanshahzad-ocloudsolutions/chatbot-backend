@@ -15,5 +15,5 @@ class User(Base):
     last_reset = Column(DateTime, default=datetime.utcnow)
     stripe_subscription_id = Column(String, nullable=True)
 
-    plan = relationship("SubscriptionPlan", back_populates="user")
     chats = relationship("Chat", back_populates="user")
+    plan = relationship("SubscriptionPlan", back_populates="users")

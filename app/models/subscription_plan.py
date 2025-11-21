@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, 
+from sqlalchemy import Column, Integer, String, DateTime
 from app.database import Base
 from sqlalchemy.orm import relationship
 
@@ -13,4 +13,5 @@ class SubscriptionPlan(Base):
     stripe_price_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    plan = relationship("User", back_populates="plan")
+    users = relationship("User", back_populates="plan")
+
