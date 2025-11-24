@@ -8,7 +8,7 @@ from app.config import (OLLAMA_API_URL, OLLAMA_MODEL,OLLAMA_TEMPERATURE,OPENAI_A
 from sqlalchemy.orm import Session
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 
 load_dotenv()
 
@@ -112,6 +112,7 @@ class OpenAi(Provider):
                 max_tokens=500,
                 temperature=temperature,
             )
+
 
             return response.choices[0].message.content.strip()
 
