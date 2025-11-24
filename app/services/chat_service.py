@@ -18,8 +18,8 @@ def get_chat_by_id_service(db:Session, chat_id:int, user_id)->Chat:
         raise ValueError("Chat not found")
     return chat
 
-def save_message_service(db:Session,chat_id,role,content)->Message:
-    msg = MessageRepository.save_message(db, chat_id, role, content)
+def save_message_service(db:Session,chat_id,role,content,file_name)->Message:
+    msg = MessageRepository.save_message(db, chat_id, role, content,file_name)
     if not msg:
         raise ValueError("Message not found")
     return msg
@@ -32,8 +32,8 @@ def generate_title_service(db: Session, chat: Chat, user_message: str )->str:
     db.refresh(chat)
     return chat.title
 
-def bot_response_service(db, chat_id, prompt):
-    return LangChain().generate_response(db,chat_id,prompt)
+def bot_response_service(db, chat_id, prompt, file):
+    return LangChain().generate_response(db,chat_id,prompt,file)
 
 def bot_title_service(prompt):
     return LangChain().generate_title(prompt)

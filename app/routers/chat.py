@@ -2,11 +2,8 @@
 from typing import List
 from app.database import get_db
 from fastapi import APIRouter,Depends, HTTPException
-from app.models.chat import Chat
 from app.models.user import User
-from app.models.message import Message
 from sqlalchemy.orm import Session
-from app.schemas.message import MessageCreate
 from sqlalchemy import desc
 from app.schemas.chat import ChatResponse
 from app.schemas.message import MessageResponse
@@ -15,6 +12,8 @@ from app.services.chat_service import (create_chat_service,get_chat_by_id_servic
                                        save_message_service, generate_title_service,
                                        bot_response_service, fetch_messages_by_chat_service,
                                        fetch_chat_history_service, delete_chat_service)
+from app.services.user_service import UserService
+from fastapi import Form, File, UploadFile
 
 router = APIRouter(
     prefix="/chats",
@@ -31,7 +30,8 @@ async def start_chat(db: Session = Depends(get_db),  user: User = Depends(get_cu
 @router.post("/{chat_id}/messages")
 async def send_message(
     chat_id: int,
-    request: MessageCreate,
+    message: str = Form(None),
+    file: UploadFile = File(None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
@@ -40,21 +40,27 @@ async def send_message(
         chat = get_chat_by_id_service(db, chat_id=chat_id, user_id=user.uid)
     except ValueError:
         raise HTTPException(status_code=404, detail="Chat not found")
-
+    
+    try:
+        UserService.deduct_credit_service(db, user)
+    except ValueError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    
+    file_name = file.filename if file else None
     # Store user message
-    save_message_service(db, chat_id, "user", content=request.content)
+    save_message_service(db, chat_id, "user", content=message or "", file_name=file_name)
 
-    if chat.title == "New Chat":
+    if chat.title == "New Chat" and message:
         try:
-            generate_title_service(db, chat, request.content)
+            generate_title_service(db, chat, message)
         except Exception as e:
             raise e 
 
     # Generate AI response from Open AI
-    bot_response = bot_response_service(db,chat_id,request.content)
+    bot_response = bot_response_service(db,chat_id,message,file)
 
     # Store bot message
-    save_message_service(db,chat_id=chat_id, role="assistant", content=bot_response)
+    save_message_service(db,chat_id=chat_id, role="assistant", content=bot_response, file_name=None)
 
     return {"response": bot_response}
 

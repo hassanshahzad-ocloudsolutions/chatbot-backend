@@ -24,7 +24,7 @@ class UserRepo:
             raise ValueError("User has no subscription")
 
         if datetime.utcnow() - user.last_reset >= timedelta(days=1):
-            user.credits_left = user.subscription.daily_credits
+            user.credits_left = user.plan.daily_credits
             user.last_reset = datetime.utcnow()
             db.commit()
 

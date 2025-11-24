@@ -53,9 +53,55 @@ class SubscriptionRepo:
             cancel_url=cancel_url,
             subscription_data={
                 "metadata": {
-                    "user_id": user.uid,
-                    "plan_id": plan.id
+                    "user_id": str(user.uid),
+                    "plan_id": str(plan.id)
                 }
             }
         )
         return {"checkout_url": checkout_session.url}
+    
+    @staticmethod
+    def set_cancellation(db: Session, user: User):
+        # Cancel Stripe subscription if exists
+        """
+        Set the Stripe subscription to cancel at the end of the current billing period.
+        User keeps their credits until the subscription actually ends.
+        """
+        if not user.stripe_subscription_id:
+            raise ValueError("User has no active Stripe subscription")
+
+        try:
+            stripe.Subscription.modify(
+                user.stripe_subscription_id,
+                cancel_at_period_end=True
+            )
+        except Exception as e:  # fallback for any Stripe error
+            raise ValueError(f"Stripe error: {e}")
+
+        # Keep subscription_id and credits as is until webhook triggers actual cancellation
+        return user
+    
+    @staticmethod
+    def cancel_to_free(db: Session, user: User):
+        # Cancel Stripe subscription if exists
+        if user.stripe_subscription_id:
+            try:
+                stripe.Subscription.delete(user.stripe_subscription_id)
+            except Exception as e:  # fallback for any Stripe error
+                raise ValueError(f"Stripe error: {e}")
+
+        # Get Free plan
+        free_plan = db.query(SubscriptionPlan).filter_by(name="Free").first()
+        if not free_plan:
+            raise ValueError("Free plan not found")
+
+        # Downgrade user to Free plan
+        user.subscription_id = free_plan.id
+        user.credits_left = free_plan.daily_credits
+        user.last_reset = datetime.utcnow()
+        user.stripe_subscription_id = None
+
+        db.commit()
+        return user
+
+

@@ -10,7 +10,7 @@ router = APIRouter(prefix="/subscription", tags=["subscription"])
 
 @router.get("/plans")
 def get_plans(db: Session = Depends(get_db)):
-    return SubscriptionService.get_plans(db)
+    return SubscriptionService.get_plans_service(db)
 
 @router.post("/subscribe/{plan_id}")
 def subscribe_plan(plan_id: int, db: Session = Depends(get_db),
@@ -18,6 +18,14 @@ def subscribe_plan(plan_id: int, db: Session = Depends(get_db),
     success_url = "https://google.com" #in case payment is succesfull route to google.com
     cancel_url = "https://facebook.com" #in case payment is cancelled route to facebook.com
     try:
-        return SubscriptionService.subscribe_user(db, user, plan_id, success_url, cancel_url)
+        return SubscriptionService.subscribe_user_service(db, user, plan_id, success_url, cancel_url)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    
+@router.post("/cancel")
+def cancel_subscription(db: Session = Depends(get_db),
+                        user: User = Depends(get_current_user)):
+    if not user.subscription_id:
+        raise HTTPException(status_code=400, detail="No active subscription to cancel")
+    SubscriptionService.set_cancel_user_subscription_service(db, user)
+    return {"message": "Subscription cancelled. You will be downgraded to Free plan with 5 daily credits after the billing month ends."}

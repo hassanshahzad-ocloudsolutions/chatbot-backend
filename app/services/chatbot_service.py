@@ -8,6 +8,7 @@ from app.config import (OLLAMA_API_URL, OLLAMA_MODEL,OLLAMA_TEMPERATURE,OPENAI_A
 from sqlalchemy.orm import Session
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from PyPDF2 import PdfFileReader
 
 load_dotenv()
 
@@ -135,7 +136,7 @@ class OpenAi(Provider):
 
 
 class LangChain(Provider):
-     def generate_response(self, db: Session, chat_id: int, prompt: str):
+     def generate_response(self, db: Session, chat_id: int, prompt: str, file):
         from app.services.chat_service import fetch_messages_by_chat_service
         # Initialize the LangChain Chat Model
         chat = ChatOpenAI(
@@ -166,6 +167,29 @@ class LangChain(Provider):
         
         # Add the current user prompt
         messages.append(HumanMessage(content=prompt))
+
+         # Process the uploaded file if provided
+        file_text = ""
+        if file:
+            filename = file.filename.lower()
+            if filename.endswith(".txt"):
+                file_text = file.file.read().decode("utf-8")
+            elif filename.endswith(".pdf"):
+                reader = PdfReader(file.file)
+                file_text = "\n".join([page.extract_text() or "" for page in reader.pages])
+
+            elif filename.endswith(".xlsx"):
+                from openpyxl import load_workbook
+                wb = load_workbook(file.file, data_only=True)  # data_only=True to get values, not formulas
+                file_text_list = []
+                for sheet in wb.worksheets:
+                    for row in sheet.iter_rows(values_only=True):
+                    # join cells in the row with tabs or commas
+                        row_text = "\t".join([str(cell) if cell is not None else "" for cell in row])
+                        file_text_list.append(row_text)
+                file_text = "\n".join(file_text_list)
+            
+            messages.append(HumanMessage(content=f"[File: {file.filename}]\n{file_text}"))
 
         try:
             # Generate response

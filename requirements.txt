@@ -95,3 +95,6 @@ langgraph-prebuilt==1.0.4
 langgraph-sdk==0.2.9
 langsmith==0.4.44
 langchain-openai==1.0.3
+stripe==14.0.0
+PyPDF2==3.0.1
+openpyxl==3.1.5

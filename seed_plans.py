@@ -1,4 +1,4 @@
-# scripts/seed_plans.py
+
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.subscription_plan import SubscriptionPlan

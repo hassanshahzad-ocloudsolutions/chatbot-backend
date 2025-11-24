@@ -10,6 +10,7 @@ class MessageResponse(BaseModel):
     role: str
     content: str
     created_at: datetime
+    file_name: str
 
     class Config:
         orm_mode = True

@@ -7,8 +7,8 @@ from app.models.message import Message
 class MessageRepository:
 
     @staticmethod
-    def save_message(db: Session,chat_id,role,content):
-        msg = Message(chat_id=chat_id, role=role, content=content)
+    def save_message(db: Session,chat_id,role,content,file_name):
+        msg = Message(chat_id=chat_id, role=role, content=content, file_name=file_name)
         db.add(msg)
         db.commit()
         db.refresh(msg)

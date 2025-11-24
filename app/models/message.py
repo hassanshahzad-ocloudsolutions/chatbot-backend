@@ -11,5 +11,6 @@ class Message(Base):
     role = Column(String)  # "user" or "assistant"
     content = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
+    file_name = Column(String(255), nullable=True)
 
     chats = relationship("Chat", back_populates="messages")
