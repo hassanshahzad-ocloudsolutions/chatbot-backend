@@ -27,6 +27,7 @@ class UserRepo:
             user.credits_left = user.plan.daily_credits
             user.last_reset = datetime.utcnow()
             db.commit()
+            print(datetime.utcnow)
 
         if user.credits_left <= 0:
             raise ValueError("Daily credits exhausted")

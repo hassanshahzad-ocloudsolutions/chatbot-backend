@@ -1,3 +1,5 @@
+
+from langchain_unstructured import UnstructuredLoader
 import requests
 from dotenv import load_dotenv
 import os
@@ -8,7 +10,12 @@ from app.config import (OLLAMA_API_URL, OLLAMA_MODEL,OLLAMA_TEMPERATURE,OPENAI_A
 from sqlalchemy.orm import Session
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from PyPDF2 import PdfReader
+import os
+import uuid
+import shutil
+from tempfile import gettempdir
+
+
 
 load_dotenv()
 
@@ -162,38 +169,42 @@ class LangChain(Provider):
         for m in messages_from_db:
             role = m.role.lower()
             if role == "user":
-                messages.append(HumanMessage(content=m.content))
+                messages.append(HumanMessage(content=m.content or ""))
             elif role == "assistant":
-                messages.append(AIMessage(content=m.content))
+                messages.append(AIMessage(content=m.content or ""))
         
-        # Add the current user prompt
-        messages.append(HumanMessage(content=prompt))
+        #Add the current user prompt
+        messages.append(HumanMessage(content=[
+            {"type": "file", "file_url": {"url": "https://example.com/image.jpg"}}
+        ]))
 
          # Process the uploaded file if provided
-        file_text = ""
-        if file:
-            filename = file.filename.lower()
-            if filename.endswith(".txt"):
-                file_text = file.file.read().decode("utf-8")
-            elif filename.endswith(".pdf"):
-                reader = PdfReader(file.file)
-                file_text = "\n".join([page.extract_text() or "" for page in reader.pages])
+        # if file:
+        #     # Create unique temporary path
+        #     tmp_dir = os.path.join(gettempdir(), "chatbot_files")
+        #     os.makedirs(tmp_dir, exist_ok=True)
+        #     unique_filename = f"{chat_id}_{uuid.uuid4().hex}_{file.filename}"
+        #     tmp_path = os.path.join(tmp_dir, unique_filename)
 
-            elif filename.endswith(".xlsx"):
-                from openpyxl import load_workbook
-                wb = load_workbook(file.file, data_only=True)  # data_only=True to get values, not formulas
-                file_text_list = []
-                for sheet in wb.worksheets:
-                    for row in sheet.iter_rows(values_only=True):
-                    # join cells in the row with tabs or commas
-                        row_text = "\t".join([str(cell) if cell is not None else "" for cell in row])
-                        file_text_list.append(row_text)
-                file_text = "\n".join(file_text_list)
-            
-            messages.append(HumanMessage(content=f"[File: {file.filename}]\n{file_text}"))
+        #     #storing file to the tmp folder
+        #     with open(tmp_path, "wb") as f:
+        #         shutil.copyfileobj(file.file, f)
 
+        #     try:
+        #         # Load file content
+        #         loader = UnstructuredLoader(tmp_path)
+        #         docs = loader.load()
+        #         file_text = "\n".join([doc.page_content for doc in docs])
+
+        #         # Add file content as part of the user's prompt
+        #         if file_text:
+        #             messages.append(HumanMessage(content=f"File content:\n{file_text}"))
+        #     finally:
+        #         # Cleanup temporary file
+        #         if os.path.exists(tmp_path):
+        #             os.remove(tmp_path)
+    
         try:
-            # Generate response
             response = chat.invoke(messages)
             return response.content.strip()
 

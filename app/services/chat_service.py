@@ -1,4 +1,3 @@
-from sqlalchemy import desc
 from app.services.chatbot_service import Ollama, OpenAi, LangChain
 from sqlalchemy.orm import Session
 from app.models.chat import Chat

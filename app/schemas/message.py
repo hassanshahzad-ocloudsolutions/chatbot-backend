@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 class MessageCreate(BaseModel):
     content: str
@@ -10,7 +11,7 @@ class MessageResponse(BaseModel):
     role: str
     content: str
     created_at: datetime
-    file_name: str
+    file_name: Optional[str]
 
     class Config:
         orm_mode = True
