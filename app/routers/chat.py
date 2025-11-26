@@ -48,7 +48,7 @@ async def send_message(
     
     file_name = file.filename if file else None
     # Store user message
-    save_message_service(db, chat_id, "user", content=message or "", file_name=file_name)
+    save_message_service(db, chat_id, "user", content=message or "", file_name=file_name,audio_content=None)
 
     if chat.title == "New Chat" and message:
         try:
@@ -60,7 +60,7 @@ async def send_message(
     bot_response = bot_response_service(db,chat_id,message,file)
 
     # Store bot message
-    save_message_service(db,chat_id=chat_id, role="assistant", content=bot_response, file_name=None)
+    save_message_service(db,chat_id=chat_id, role="assistant", content=bot_response, file_name=None, audio_content=None)
 
     return {"response": bot_response}
 

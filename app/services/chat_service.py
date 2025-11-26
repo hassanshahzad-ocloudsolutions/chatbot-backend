@@ -17,8 +17,8 @@ def get_chat_by_id_service(db:Session, chat_id:int, user_id)->Chat:
         raise ValueError("Chat not found")
     return chat
 
-def save_message_service(db:Session,chat_id,role,content,file_name)->Message:
-    msg = MessageRepository.save_message(db, chat_id, role, content,file_name)
+def save_message_service(db:Session,chat_id,role,content,file_name,audio_content)->Message:
+    msg = MessageRepository.save_message(db, chat_id, role, content,file_name,audio_content)
     if not msg:
         raise ValueError("Message not found")
     return msg
@@ -32,7 +32,7 @@ def generate_title_service(db: Session, chat: Chat, user_message: str )->str:
     return chat.title
 
 def bot_response_service(db, chat_id, prompt, file):
-    return LangChain().generate_response(db,chat_id,prompt,file)
+    return OpenAi().generate_response(db,chat_id,prompt,file)
 
 def bot_title_service(prompt):
     return LangChain().generate_title(prompt)
@@ -50,4 +50,9 @@ def delete_chat_service(db: Session,chat_id, user_id)->None:
     if not chat:
         raise ValueError("Chat not found")
     ChatRepository.delete_chat(db, chat)
+
+
+def get_latest_message_service(db:Session, chat_id:int):
+    latest_msg = MessageRepository.get_latest_message(db,chat_id)
+    return latest_msg
     

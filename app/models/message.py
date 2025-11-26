@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
@@ -12,5 +12,6 @@ class Message(Base):
     content = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
     file_name = Column(String(255), nullable=True)
+    audio_content = Column(Text, nullable=True)
 
     chats = relationship("Chat", back_populates="messages")
