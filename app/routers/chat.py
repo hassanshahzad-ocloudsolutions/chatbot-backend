@@ -1,19 +1,25 @@
 
-from typing import List
+from typing import List, Optional
 from app.database import get_db
-from fastapi import APIRouter,Depends, HTTPException
+from fastapi import APIRouter,Depends, HTTPException, Query
+from app.models.chat import Chat
 from app.models.user import User
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
 from app.schemas.chat import ChatResponse
 from app.schemas.message import MessageResponse
 from app.services.auth_service import get_current_user
+from app.services.optional_auth_service import get_optional_user
+from app.services.user_service import UserService
+from fastapi import Form, File, UploadFile
+from datetime import datetime, timedelta
+from uuid import UUID
 from app.services.chat_service import (create_chat_service,get_chat_by_id_service,
                                        save_message_service, generate_title_service,
                                        bot_response_service, fetch_messages_by_chat_service,
-                                       fetch_chat_history_service, delete_chat_service)
-from app.services.user_service import UserService
-from fastapi import Form, File, UploadFile
+                                       fetch_chat_history_service, delete_chat_service,
+                                       save_link_token_service, get_link_token_service, get_chat_link_uuid_service,
+                                       check_chat_exists_by_link_chat_id_service, search_chats_service)
+
 
 router = APIRouter(
     prefix="/chats",
@@ -85,3 +91,51 @@ async def charts_history(db: Session = Depends(get_db), user: User = Depends(get
 async def delete_chat(chat_id:int, db: Session = Depends(get_db), user: User= Depends(get_current_user)):
     delete_chat_service(db, chat_id, user_id=user.uid)
     return {"message": f"Chat {chat_id} deleted successfully"}
+
+
+@router.get("/share/{chat_id}")
+async def create_shareable_link(chat_id:int, db:Session = Depends(get_db), user:User =Depends(get_current_user)):
+    try: 
+        chat = get_chat_by_id_service(db, chat_id=chat_id, user_id=user.uid)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    #if already shareable link exists
+    if get_link_token_service(db,chat_id):
+        token = get_link_token_service(db, chat_id)
+        share_url = f"https://yourapp.com/chat/view/{token}"
+        return {"share_url": share_url}
+
+    #if first time user clicks share button
+    save_link_token_service(db,chat_id,read_only=True)
+    
+    uuid_token = get_link_token_service(db, chat_id)
+    share_url = f"https://yourapp.com/chat/view/{uuid_token}" #write here the frontend route like in chatgpt then this route will call below mentioned backend route pasing uuid as path parameter
+    return {"share_url": share_url}
+
+@router.get("/view/{token}")
+async def view_chat(token:UUID, db: Session = Depends(get_db), user = Depends(get_optional_user)):
+    link = get_chat_link_uuid_service(db,token)
+    if not link:
+        raise HTTPException(status_code=404, detail="Link invalid")
+
+    chat = check_chat_exists_by_link_chat_id_service(db,link.chat_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+ 
+    read_only = link.read_only
+    if user and user.uid == chat.user_id:
+        # If the logged-in user is the owner, allow full access
+        read_only = False
+
+    return {
+        "chat_id": chat.id,
+        "messages": chat.messages,
+        "read_only": read_only
+    }
+
+@router.get("/search",response_model=List[ChatResponse])
+def search_chats(query: Optional[str] = Query(None, description="Search query for chat title or message content"),
+                db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    return search_chats_service(db=db, user_id=current_user.uid, query=query)

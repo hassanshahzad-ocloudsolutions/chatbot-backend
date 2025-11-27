@@ -13,5 +13,6 @@ class ChatResponse(ChatBase):
     id: int
     created_at: datetime
 
+
     class Config:
         orm_mode = True

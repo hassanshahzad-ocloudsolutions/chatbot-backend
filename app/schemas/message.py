@@ -9,7 +9,7 @@ class MessageCreate(BaseModel):
 class MessageResponse(BaseModel):
     id: int
     role: str
-    content: str
+    content: str|None
     created_at: datetime
     file_name: Optional[str]
 

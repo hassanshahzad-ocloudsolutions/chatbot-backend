@@ -12,7 +12,6 @@ class MessageRepository:
         db.add(msg)
         db.commit()
         db.refresh(msg)
-        print(msg.content, msg.id)
         return msg
     
 

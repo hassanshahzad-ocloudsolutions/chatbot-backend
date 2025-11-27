@@ -1,4 +1,5 @@
 
+from langchain_unstructured import UnstructuredLoader
 import requests
 from dotenv import load_dotenv
 import os
@@ -180,7 +181,7 @@ class OpenAi(Provider):
                     
                     extension = file.filename.split('.')[-1]
                     image_message =  {"type": "input_image", "image_url": f"data:image/{extension};base64,{base64_image}"}
-                    messages.append({"role": "user", "content": [user_message, image_message]})
+                    messages.append({"role": "user", "content": f'file name {file.filename} {[user_message, image_message]}'})
 
                 else:
                     raise ValueError(f"Unsupported file format: {file.filename}")

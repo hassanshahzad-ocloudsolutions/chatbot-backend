@@ -12,4 +12,6 @@ class Chat(Base):
     user_id = Column(String, ForeignKey("users.uid"))
 
     user = relationship("User", back_populates="chats")
+    link = relationship("ChatLinks", back_populates="chat", cascade="all, delete-orphan")
     messages = relationship("Message", back_populates="chats", cascade="all, delete-orphan")
+
