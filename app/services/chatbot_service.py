@@ -158,7 +158,7 @@ class OpenAi(Provider):
                         upload = client.files.create(file=f, purpose="assistants")
                     # Add file message
                     file_message = {"type": "input_file", "file_id": upload.id}
-                    messages.append({"role": "user", "content": f'file name {file.filename} {[user_message, file_message]}'})
+                    messages.append({"role": "user", "content":[user_message, file_message]})
                 
                 #if user attaches mp3 file ie this is not recored voice note one
                 elif (file.filename.endswith(tuple(audio_extensions))):
@@ -191,6 +191,8 @@ class OpenAi(Provider):
                     os.remove(tmp_path)
         else:
             messages.append({"role": "user","content":[user_message]})
+        
+
 
         # Generate response
         try:
