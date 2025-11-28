@@ -79,8 +79,6 @@ def  save_link_token_service(db:Session, chat_id, read_only):
 
 def get_link_token_service(db:Session, chat_id):
     token = ChatRepository.get_link_token(db,chat_id)
-    if not token:
-        raise HTTPException(status_code=404, detail="Link token not found")
     return token
 
 def get_chat_link_uuid_service(db:Session, token):
@@ -99,3 +97,26 @@ def check_chat_exists_by_link_chat_id_service(db:Session, link_chat_id)->bool:
 def search_chats_service(db: Session,user_id,query)->List[Chat]:
     searched_chats=  ChatRepository.search_chats(db,user_id=user_id, query=query)
     return searched_chats
+
+
+def archive_the_chat_service(db:Session, chat_id, user_id)->Chat:
+    archived_chat = ChatRepository.archive_the_chat(db,chat_id, user_id)
+    return archived_chat
+
+def  unarchive_the_chat_service(db:Session, chat_id, user_id)->Chat:
+    unarchived_chat = ChatRepository.unarchive_the_chat(db,chat_id,user_id)
+    return unarchived_chat
+
+def fetch_all_archive_chats_service(db:Session, user_id)->List[Chat]:
+    all_archive = ChatRepository.fetch_all_archive_chats(db, user_id)
+    if not all_archive:
+        raise HTTPException(status_code=404, detail="No archive chats found for this user")
+    return all_archive
+
+def delete_all_archive_chats_service(db:Session, user_id):
+    delete_archive_chats_count = ChatRepository.delete_all_archive_chats(db,user_id)
+    return delete_archive_chats_count
+
+def  delete_all_chats_service(db:Session, user_id):
+    deleted_chats_count = ChatRepository.delete_all_chats(db,user_id)
+    return deleted_chats_count

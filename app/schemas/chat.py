@@ -12,6 +12,7 @@ class ChatCreate(ChatBase):
 class ChatResponse(ChatBase):
     id: int
     created_at: datetime
+    is_archive: bool
 
 
     class Config:

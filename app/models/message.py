@@ -7,7 +7,7 @@ class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    chat_id = Column(Integer, ForeignKey("chats.id"))
+    chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"))
     role = Column(String)  # "user" or "assistant"
     content = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
