@@ -15,5 +15,10 @@ class ChatResponse(ChatBase):
     is_archive: bool
 
 
+class RenameChatRequest(BaseModel):
+    new_title: str
+
+
+
     class Config:
         orm_mode = True

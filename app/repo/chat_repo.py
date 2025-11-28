@@ -147,6 +147,13 @@ class ChatRepository:
         user_chats.delete(synchronize_session=False)
         db.commit()
         return count
+    
+    @staticmethod
+    def update_chat_title(db:Session,chat: Chat, new_title: str):
+        chat.title = new_title
+        db.commit()
+        db.refresh(chat)
+        return chat
 
 
 

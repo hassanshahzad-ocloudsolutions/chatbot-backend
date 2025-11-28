@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.services.firebase_service import verify_firebase_token
 from datetime import datetime
-from app.repo.subscription_repo import SubscriptionRepo
 from app.models.subscription_plan import SubscriptionPlan
 
 #not need to include or register in routes as it is not our an endpoint but will be used by other end points

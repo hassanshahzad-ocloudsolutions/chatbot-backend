@@ -101,7 +101,7 @@ class Ollama(Provider):
 
 class OpenAi(Provider):
     def generate_response(self, db: Session, chat_id: int, prompt: str, file: UploadFile):
-        from app.services.chat_service import fetch_messages_by_chat_service, get_latest_message_service
+        from app.services.chat_service import ChatService
         api_key = OPENAI_API_KEY
         model = OPENAI_MODEL
         temperature = float(OPENAI_TEMPERATURE)
@@ -116,7 +116,7 @@ class OpenAi(Provider):
                                                               "when replying. Make sure your responses are consistent with previous messages "
                                                               "and maintain the context of this chat."}]}]
 
-        for m in fetch_messages_by_chat_service(db, chat_id):
+        for m in ChatService.fetch_messages_by_chat_service(db, chat_id):
             if m.content:
                 # Determine type based on role because assistant messages or content is of output_text type.
                 content_type = "input_text" if m.role == "user" else "output_text"
@@ -167,7 +167,7 @@ class OpenAi(Provider):
                             model="whisper-1",
                             file=audio_file
                         )
-                    latest_msg = get_latest_message_service(db, chat_id)
+                    latest_msg = ChatService.get_latest_message_service(db, chat_id)
 
                     if latest_msg:
                         latest_msg.audio_content = transcription.text
@@ -181,7 +181,7 @@ class OpenAi(Provider):
                     
                     extension = file.filename.split('.')[-1]
                     image_message =  {"type": "input_image", "image_url": f"data:image/{extension};base64,{base64_image}"}
-                    messages.append({"role": "user", "content": f'file name {file.filename} {[user_message, image_message]}'})
+                    messages.append({"role": "user", "content": [user_message, image_message]})
 
                 else:
                     raise ValueError(f"Unsupported file format: {file.filename}")
@@ -200,6 +200,7 @@ class OpenAi(Provider):
                 input=messages,
                 temperature=temperature
             )
+
             return response.output_text
 
         except Exception as e:
@@ -253,7 +254,7 @@ class OpenAi(Provider):
 
 class LangChain(Provider):
      def generate_response(self, db: Session, chat_id: int, prompt: str, file):
-        from app.services.chat_service import fetch_messages_by_chat_service
+        from app.services.chat_service import ChatService
         # Initialize the LangChain Chat Model
         chat = ChatOpenAI(
             openai_api_key=OPENAI_API_KEY,
@@ -264,7 +265,7 @@ class LangChain(Provider):
 
         
         # Fetch previous messages for context
-        messages_from_db = fetch_messages_by_chat_service(db, chat_id)
+        messages_from_db = ChatService.fetch_messages_by_chat_service(db, chat_id)
 
         # Build the message list for LangChain
         messages = [
