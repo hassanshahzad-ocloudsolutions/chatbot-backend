@@ -4,9 +4,11 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 # Upload your .py file
 upload = client.files.create(
-    file=open("math.pdf", "rb"),
+    file=open("requirements.txt", "rb"),
     purpose="assistants"
 )
+
+print(f"File uploaded successfully. File ID: {upload.id}")
 
 # Send messages to the model
 response = client.responses.create(
@@ -17,20 +19,21 @@ response = client.responses.create(
             "content": [
                 {
                     "type": "input_text",
-                    "text": (
-                        "You are a helpful assistant. "
-                        "Always consider the full conversation history when replying. "
-                        "Make sure your responses are consistent with previous messages "
-                        "and maintain the context of this chat."
-                    )
+                    "text": "You are a helpful assistant."
                 }
             ]
         },
         {
             "role": "user",
             "content": [
-                {"type": "input_text", "text": "Please read this file"},
-                {"type": "input_file", "file_id": upload.id}
+                {
+                    "type": "input_file",
+                    "file_id": upload.id
+                },
+                {
+                    "type": "input_text",
+                    "text": "Please read and summarize this file."
+                }
             ]
         }
     ]

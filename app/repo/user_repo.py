@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from app.models.user import User
@@ -21,7 +22,7 @@ class UserRepo:
     @staticmethod
     def deduct_credit(db: Session, user: User):
         if not user.plan:
-            raise ValueError("User has no subscription")
+            raise HTTPException("User has no subscription")
 
         if datetime.utcnow() - user.last_reset >= timedelta(days=1):
             user.credits_left = user.plan.daily_credits
@@ -30,7 +31,7 @@ class UserRepo:
             print(datetime.utcnow)
 
         if user.credits_left <= 0:
-            raise ValueError("Daily credits exhausted")
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Daily credits exhausted")
 
         user.credits_left -= 1
         db.commit()

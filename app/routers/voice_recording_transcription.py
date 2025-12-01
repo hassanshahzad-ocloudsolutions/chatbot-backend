@@ -16,7 +16,7 @@ async def record_transcribe(file: UploadFile = File(...), db: Session = Depends(
     sends it to OpenAI Whisper API, and returns the transcription.
     """
     # Optional: support multiple formats from mic
-    allowed_extensions = (".mp3", ".wav", ".webm", ".ogg")
+    allowed_extensions = (".mp3", ".wav", ".ogg")
     if not file.filename.lower().endswith(allowed_extensions):
         raise HTTPException(status_code=400, detail=f"Unsupported audio format. Allowed: {allowed_extensions}")
 

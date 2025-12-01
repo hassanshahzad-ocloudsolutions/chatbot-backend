@@ -16,6 +16,7 @@ import shutil
 from tempfile import gettempdir
 from fastapi import UploadFile
 import base64
+from fpdf import FPDF
 
 load_dotenv()
 
@@ -126,14 +127,10 @@ class OpenAi(Provider):
                 })
 
         documents_extension = [
-        ".art", ".bat", ".brf", ".c", ".cls", ".css",
-        ".diff", ".eml", ".es", ".h", ".hs", ".htm", ".html", ".ics", ".ifb", ".java",
-        ".js", ".json", ".ksh", ".ltx", ".mail", ".markdown", ".md", ".mht", ".mhtml",
-        ".mjs", ".nws", ".patch", ".pdf", ".pl", ".pm", ".pot", ".py", ".scala", ".sh", ".shtml",
-        ".srt", ".sty", ".tex", ".text", ".txt", ".vcf", ".vtt", ".xml", ".yaml", ".yml"
+            ".pdf",".txt"
         ]
 
-        audio_extensions = [".mp3", ".wav", ".m4a", ".webm", ".ogg"]
+        audio_extensions = [".mp3"]
 
         image_extensions = [".png",".jpeg","jpg", "webp"]
 
@@ -153,8 +150,24 @@ class OpenAi(Provider):
 
             try:
                 if (file.filename.endswith(tuple(documents_extension))):
-                # Upload to OpenAI
-                    with open(tmp_path, "rb") as f:
+                    upload_path = tmp_path
+                    if file.filename.endswith('.txt'):
+                        pdf_path = tmp_path.replace('.txt', '.pdf')
+                        
+                        # Read text content
+                        with open(tmp_path, 'r', encoding='utf-8') as txt_file:
+                            text_content = txt_file.read()
+                        
+                        # Create PDF
+                        pdf = FPDF()
+                        pdf.add_page()
+                        pdf.set_font("Arial", size=12)
+                        pdf.multi_cell(0, 10, text_content)
+                        pdf.output(pdf_path)
+                
+                        upload_path = pdf_path
+
+                    with open(upload_path, "rb") as f:
                         upload = client.files.create(file=f, purpose="assistants")
                     # Add file message
                     file_message = {"type": "input_file", "file_id": upload.id}
