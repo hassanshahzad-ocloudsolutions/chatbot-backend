@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.models.subscription_plan import SubscriptionPlan
 from app.services.subscription_serivce import SubscriptionService 
 from app.services.user_service import UserService
 from app.services.auth_service import get_current_user
@@ -29,3 +30,23 @@ def cancel_subscription(db: Session = Depends(get_db),
         raise HTTPException(status_code=400, detail="No active subscription to cancel")
     SubscriptionService.set_cancel_user_subscription_service(db, user)
     return {"message": "Subscription cancelled. You will be downgraded to Free plan with 5 daily credits after the billing month ends."}
+
+@router.get("/current")
+def get_current_subscription(db:Session= Depends(get_db), user:User = Depends(get_current_user)):
+     # Join User with SubscriptionPlan to get subscription_name
+    subscription = (
+        db.query(SubscriptionPlan.name)
+        .join(User, User.subscription_id == SubscriptionPlan.id)
+        .filter(User.uid == user.uid)
+        .first()
+    )
+
+    subscription_name = subscription[0] if subscription else None
+
+    return {
+        "subscription_id": user.subscription_id,
+        "subscription_name": subscription_name,  # added field
+        "credits_left": user.credits_left,
+        "last_reset": user.last_reset,
+        "stripe_subscription_id": user.stripe_subscription_id
+    }
