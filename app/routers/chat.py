@@ -96,14 +96,14 @@ async def create_shareable_link(chat_id:int, db:Session = Depends(get_db), user:
     #if already shareable link exists
     uuid_token = ChatService.get_link_token_service(db, chat_id)
     if uuid_token:
-        share_url = f"https://yourapp.com/chat/view/{uuid_token}"
+        share_url = f"localhost:8080/chat/view/{uuid_token}"
         return {"share_url": share_url}
 
     #if first time user clicks share button
     ChatService.save_link_token_service(db,chat_id,read_only=True)
     
     uuid_token = ChatService.get_link_token_service(db, chat_id)
-    share_url = f"https://yourapp.com/chat/view/{uuid_token}" #write here the frontend route like in chatgpt then this route will call below mentioned backend route pasing uuid as path parameter
+    share_url = f"localhost:8080/chat/view/{uuid_token}" #write here the frontend route like in chatgpt then this route will call below mentioned backend route pasing uuid as path parameter
     return {"share_url": share_url}
 
 #when shareable link put in browser this route will be called and show chat messages

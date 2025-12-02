@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, or_, select
+from sqlalchemy import desc, or_, select, inspect
 from app.models.chat import Chat
 from app.models.chat_links import ChatLinks
 from app.models.message import Message
@@ -67,26 +67,28 @@ class ChatRepository:
     @staticmethod
     def search_chats(db:Session,user_id: str,query: Optional[str] = None) ->List[Chat]:
         """
-        Search chats by title or any message content for a given user
+        Search chats by title or message content for a given user.
+        If a chat has no messages, only filter by title.
         """
         if not query:
             return []
 
-        # Join Chat with Message to search in both title and messages
-        return (
-            db.query(Chat)
-            .join(Message, Message.chat_id == Chat.id)
-            .filter(
-                Chat.user_id == user_id,
-                or_(
-                    Chat.title.ilike(f"%{query}%"),
-                    Message.content.ilike(f"%{query}%")
-                )
+        chat_query = db.query(Chat).filter(Chat.user_id == user_id)
+
+        # Subquery to check if messages exist for this chat
+
+        # If messages exist, search in both title and content
+        chat_query = chat_query.filter(
+            or_(
+                Chat.title.ilike(f"%{query}%"),
+                db.query(Message)
+                .filter(Message.chat_id == Chat.id, Message.content.ilike(f"%{query}%"))
+                .exists()
             )
-            .distinct()
-            .order_by(Chat.created_at.desc())
-            .all()
         )
+
+        return chat_query.order_by(Chat.created_at.desc()).all()
+       
     
     @staticmethod
     def archive_the_chat(db:Session, chat_id,user_id)->Chat:
