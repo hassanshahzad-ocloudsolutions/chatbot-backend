@@ -16,8 +16,8 @@ def get_plans(db: Session = Depends(get_db)):
 @router.post("/subscribe/{plan_id}")
 def subscribe_plan(plan_id: int, db: Session = Depends(get_db),
                    user: User = Depends(get_current_user)):
-    success_url = "https://google.com" #in case payment is succesfull route to google.com
-    cancel_url = "https://facebook.com" #in case payment is cancelled route to facebook.com
+    success_url = "http://localhost:8080/payment/success" #in case payment is succesfull route to google.com
+    cancel_url = "http://localhost:8080/payment/failed" #in case payment is cancelled route to facebook.com
     try:
         return SubscriptionService.subscribe_user_service(db, user, plan_id, success_url, cancel_url)
     except ValueError as e:
@@ -34,18 +34,13 @@ def cancel_subscription(db: Session = Depends(get_db),
 @router.get("/current")
 def get_current_subscription(db:Session= Depends(get_db), user:User = Depends(get_current_user)):
      # Join User with SubscriptionPlan to get subscription_name
-    subscription = (
-        db.query(SubscriptionPlan.name)
-        .join(User, User.subscription_id == SubscriptionPlan.id)
-        .filter(User.uid == user.uid)
-        .first()
-    )
+    subscription = SubscriptionService.get_current_subscription_serivce(db, user)
 
     subscription_name = subscription[0] if subscription else None
 
     return {
         "subscription_id": user.subscription_id,
-        "subscription_name": subscription_name,  # added field
+        "subscription_name": subscription_name, 
         "credits_left": user.credits_left,
         "last_reset": user.last_reset,
         "stripe_subscription_id": user.stripe_subscription_id

@@ -103,5 +103,14 @@ class SubscriptionRepo:
 
         db.commit()
         return user
+    
+    @staticmethod
+    def get_current_subscription(db:Session, user:User):
+        subscription = (db.query(SubscriptionPlan.name)
+        .join(User, User.subscription_id == SubscriptionPlan.id)
+        .filter(User.uid == user.uid)
+        .first())
+
+        return subscription
 
 

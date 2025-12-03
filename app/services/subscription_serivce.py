@@ -21,4 +21,7 @@ class SubscriptionService:
     def cancel_user_subscription_and_set_free_plan_service(db:Session, user: User):
         return SubscriptionRepo.cancel_to_free(db,user)
     
-  
+    @staticmethod
+    def get_current_subscription_serivce(db:Session, user:User):
+        return SubscriptionRepo.get_current_subscription(db,user)
+    
