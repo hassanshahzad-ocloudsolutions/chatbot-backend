@@ -55,16 +55,12 @@ class ChatService:
     @staticmethod
     def fetch_messages_by_chat_service(db:Session, chat_id)->List[Message]:
         messages = MessageRepository.fetch_by_chat(db,chat_id)
-        if not messages:
-            raise HTTPException(status_code=404, detail="No messages found for this chat")
-        return messages
+        return messages if messages else []
 
     @staticmethod
     def fetch_chat_history_service(db:Session, user_id)->List[Chat]:
         chats = ChatRepository.get_all_chats(db, user_id)
-        if not chats:
-            raise HTTPException(status_code=404, detail="No chats found for this user")
-        return chats
+        return chats if chats else []
 
     @staticmethod
     def delete_chat_service(db: Session,chat_id, user_id)->None:

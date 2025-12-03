@@ -122,6 +122,7 @@ async def view_chat(token:UUID, db: Session = Depends(get_db), user = Depends(ge
     if user and user.uid == chat.user_id:
         # If the logged-in user is the owner, allow full access
         read_only = False
+    print(chat.messages)
 
     return {
         "chat_id": chat.id,
