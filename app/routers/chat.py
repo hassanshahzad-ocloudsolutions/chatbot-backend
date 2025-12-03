@@ -116,17 +116,17 @@ async def view_chat(token:UUID, db: Session = Depends(get_db), user = Depends(ge
     chat = ChatService.check_chat_exists_by_link_chat_id_service(db,link.chat_id)
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
-    
  
     read_only = link.read_only
     if user and user.uid == chat.user_id:
         # If the logged-in user is the owner, allow full access
         read_only = False
-    print(chat.messages)
+    
+    messages = ChatService.fetch_messages_by_chat_service(db, chat_id=chat.id)
 
     return {
         "chat_id": chat.id,
-        "messages": chat.messages,
+        "messages": messages,
         "read_only": read_only
     }
 
@@ -178,4 +178,3 @@ def rename_chat(chat_id: int, request: RenameChatRequest, db: Session = Depends(
         "id": updated_chat.id,
         "title": updated_chat.title
     }
-

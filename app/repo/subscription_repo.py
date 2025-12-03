@@ -71,10 +71,12 @@ class SubscriptionRepo:
             raise ValueError("User has no active Stripe subscription")
 
         try:
+            print("Updation")
             stripe.Subscription.modify(
                 user.stripe_subscription_id,
                 cancel_at_period_end=True
             )
+
         except Exception as e:  # fallback for any Stripe error
             raise ValueError(f"Stripe error: {e}")
 
@@ -84,12 +86,6 @@ class SubscriptionRepo:
     @staticmethod
     def cancel_to_free(db: Session, user: User):
         # Cancel Stripe subscription if exists
-        if user.stripe_subscription_id:
-            try:
-                stripe.Subscription.delete(user.stripe_subscription_id)
-            except Exception as e:  # fallback for any Stripe error
-                raise ValueError(f"Stripe error: {e}")
-
         # Get Free plan
         free_plan = db.query(SubscriptionPlan).filter_by(name="Free").first()
         if not free_plan:

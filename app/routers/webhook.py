@@ -55,9 +55,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         
 
     elif event.type=="customer.subscription.deleted":
-        invoice = event.data.object
         # Get subscription ID
-        stripe_subscription_id = invoice["lines"]["data"][0]["parent"]["subscription_item_details"]["subscription"]
+        stripe_subscription_id =  event.data.object["id"]
         user = db.query(User).filter(User.stripe_subscription_id == stripe_subscription_id).first()
         if user:    
             SubscriptionService.cancel_user_subscription_and_set_free_plan_service(db, user)
