@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from app.database import Base, engine
 from app.models import user, chat, message
-from app.routers import chat, subscription, webhook, voice_recording_transcription
+from app.routers import chat, subscription, webhook, voice_recording_transcription,user
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
@@ -21,6 +21,7 @@ app.include_router(chat.router)
 app.include_router(subscription.router)
 app.include_router(webhook.router)
 app.include_router(voice_recording_transcription.router)
+app.include_router(user.router)
 
 # Allow frontend origin
 origins = [

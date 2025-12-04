@@ -11,3 +11,4 @@ class UserService:
     @staticmethod
     def change_subscription_service(db: Session, user: User, new_plan_id: int, stripe_subscription_id: str | None = None):
         return UserRepo.change_subscription(db, user, new_plan_id, stripe_subscription_id)
+    

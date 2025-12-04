@@ -35,3 +35,4 @@ class UserRepo:
 
         user.credits_left -= 1
         db.commit()
+

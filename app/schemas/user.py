@@ -17,3 +17,11 @@ class UserResponse(UserBase):
 
     class Config:
         orm_mode = True
+
+class UserRemainingCredits(BaseModel):
+    uid:str
+    credits_left:int
+
+    class Config:
+        orm_mode = True
+    
