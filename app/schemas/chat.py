@@ -18,7 +18,5 @@ class ChatResponse(ChatBase):
 class RenameChatRequest(BaseModel):
     new_title: str
 
-
-
     class Config:
         orm_mode = True
