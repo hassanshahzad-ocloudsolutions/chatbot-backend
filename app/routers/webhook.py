@@ -29,7 +29,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     # Handle events
     if event.type == "invoice.payment_succeeded":
-
         invoice = event.data.object
         # Get subscription ID
         stripe_subscription_id = invoice["lines"]["data"][0]["parent"]["subscription_item_details"]["subscription"]
@@ -67,14 +66,14 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         invoice = event.data.object
         metadata = invoice["lines"]["data"][0]["metadata"]
         uid = metadata.get("user_id")
-        
+        stripe_subscription_id = invoice["lines"]["data"][0]["parent"]["subscription_item_details"]["subscription"]
         # Find user by stripe_subscription_id
-        user = db.query(User).filter(User.uid == uid).first()
-        if user:
-             return {"status": "ignored", "reason": "invoice.payment_failed"}
-
-    # For any other event, just acknowledge
-    return {"status": "ignored", "event_type": event.type}
+        user = db.query(User).filter(User.stripe_subscription_id == stripe_subscription_id).first()
+        if user:    
+            SubscriptionService.cancel_user_subscription_and_set_free_plan_service(db, user)
+            return {"status": "success", "event": "Payment failed so cancelled the subscription"}
+        return {"status": "ignored", "reason": "User not found"}
+    
 
 
         
