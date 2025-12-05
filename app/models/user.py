@@ -10,8 +10,8 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    subscription_id = Column(Integer, ForeignKey("subscription_plans.id"), nullable=True)
-    credits_left = Column(Integer, default=0)
+    subscription_id = Column(Integer, ForeignKey("subscription_plans.id"), nullable=True ,default=1)
+    credits_left = Column(Integer, default=5)
     last_reset = Column(DateTime, default=datetime.utcnow)
     stripe_subscription_id = Column(String, nullable=True)
 

@@ -6,6 +6,8 @@ from alembic import context
 from app.models.user import User
 from app.models.chat import Chat
 from app.models.message import Message
+from app.models.subscription_plan import SubscriptionPlan
+from app.models.chat_links import ChatLinks
 from app.database import Base
 import os
 

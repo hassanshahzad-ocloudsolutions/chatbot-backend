@@ -2,6 +2,7 @@
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.subscription_plan import SubscriptionPlan
+from app.models.user import User
 from datetime import datetime
 
 def seed_plans():
