@@ -1,5 +1,4 @@
 
-from langchain_unstructured import UnstructuredLoader
 import requests
 from dotenv import load_dotenv
 import os
@@ -304,30 +303,30 @@ class LangChain(Provider):
         # ]))
 
          # Process the uploaded file if provided
-        if file:
-            # Create unique temporary path
-            tmp_dir = os.path.join(gettempdir(), "chatbot_files")
-            os.makedirs(tmp_dir, exist_ok=True)
-            unique_filename = f"{chat_id}_{uuid.uuid4().hex}_{file.filename}"
-            tmp_path = os.path.join(tmp_dir, unique_filename)
+        # if file:
+        #     # Create unique temporary path
+        #     tmp_dir = os.path.join(gettempdir(), "chatbot_files")
+        #     os.makedirs(tmp_dir, exist_ok=True)
+        #     unique_filename = f"{chat_id}_{uuid.uuid4().hex}_{file.filename}"
+        #     tmp_path = os.path.join(tmp_dir, unique_filename)
 
-            #storing file to the tmp folder
-            with open(tmp_path, "wb") as f:
-                shutil.copyfileobj(file.file, f)
+        #     #storing file to the tmp folder
+        #     with open(tmp_path, "wb") as f:
+        #         shutil.copyfileobj(file.file, f)
 
-            try:
-                # Load file content
-                loader = UnstructuredLoader(tmp_path)
-                docs = loader.load()
-                file_text = "\n".join([doc.page_content for doc in docs])
+        #     try:
+        #         # Load file content
+        #         loader = UnstructuredLoader(tmp_path)
+        #         docs = loader.load()
+        #         file_text = "\n".join([doc.page_content for doc in docs])
 
-                # Add file content as part of the user's prompt
-                if file_text:
-                    messages.append(HumanMessage(content=f"File content:\n{file_text}"))
-            finally:
-                # Cleanup temporary file
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
+        #         # Add file content as part of the user's prompt
+        #         if file_text:
+        #             messages.append(HumanMessage(content=f"File content:\n{file_text}"))
+        #     finally:
+        #         # Cleanup temporary file
+        #         if os.path.exists(tmp_path):
+        #             os.remove(tmp_path)
     
         try:
             response = chat.invoke(messages)
