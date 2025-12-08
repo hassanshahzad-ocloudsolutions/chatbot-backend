@@ -29,3 +29,4 @@ FAILURE_URL=os.getenv("FAILURE_URL")
 SHARE_URL=os.getenv("SHARE_URL")
 
 print(f"SUCCESS_URL: {SUCCESS_URL}")
+print(f"FAILURE_URL: {FAILURE_URL}")
