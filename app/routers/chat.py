@@ -59,14 +59,8 @@ async def send_message(
             raise e 
 
     # Generate AI response from Open AI
-    bot_response =  ChatService.bot_response_service(db,chat_id,message,file) #storing bot response inside this function because of streamed output
+    return ChatService.bot_response_service(db,chat_id,message,file) #storing bot response inside this function because of streamed output
 
-    
-    return StreamingResponse(
-            bot_response.body_iterator,
-            media_type="text/plain",
-            headers={"X-Chat-Title": chat.title}
-        )
 
 
 
