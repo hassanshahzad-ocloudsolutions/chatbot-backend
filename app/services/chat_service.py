@@ -36,7 +36,6 @@ class ChatService:
         chat.title = ai_response
         db.commit()
         db.refresh(chat)
-        return chat.title
 
     @staticmethod
     def bot_response_service(db, chat_id, prompt, file):

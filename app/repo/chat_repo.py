@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, or_, select, inspect
+from sqlalchemy import desc, or_, select, exists
 from app.models.chat import Chat
 from app.models.chat_links import ChatLinks
 from app.models.message import Message
@@ -75,17 +75,14 @@ class ChatRepository:
 
         chat_query = db.query(Chat).filter(Chat.user_id == user_id)
 
-        # Subquery to check if messages exist for this chat
+        subq = exists().where(
+            (Message.chat_id == Chat.id) &
+            (Message.content.ilike(f"%{query}%")))
 
-        # If messages exist, search in both title and content
         chat_query = chat_query.filter(
             or_(
                 Chat.title.ilike(f"%{query}%"),
-                db.query(Message)
-                .filter(Message.chat_id == Chat.id, Message.content.ilike(f"%{query}%"))
-                .exists()
-            )
-        )
+                subq))
 
         return chat_query.order_by(Chat.created_at.desc()).all()
        

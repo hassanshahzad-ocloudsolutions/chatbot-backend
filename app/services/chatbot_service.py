@@ -16,6 +16,11 @@ from tempfile import gettempdir
 from fastapi import UploadFile
 import base64
 from fpdf import FPDF
+from fastapi.responses import StreamingResponse
+
+from app.routers import chat
+
+from app.models.chat import Chat
 
 load_dotenv()
 
@@ -204,21 +209,38 @@ class OpenAi(Provider):
         else:
             messages.append({"role": "user","content":[user_message]})
         
-
-
-        # Generate response
         try:
+            def stream_openai_response():
+                content_buffer = ""
 
-            response = client.responses.create(
-                model=model,
-                input=messages,
-                temperature=temperature
-            )
+                with client.responses.stream(
+                    model=model,
+                    input=messages,
+                    temperature=temperature
+                ) as stream:
+                    for event in stream:
+                        if event.type == "response.output_text.delta" and event.delta:
+                            chunk = event.delta
+                            content_buffer += chunk
+                            yield chunk  # stream to frontend
 
-            return response.output_text
+                        elif event.type == "response.completed":
+                            break
+
+                # Save full response after streaming finishes
+                ChatService.save_message_service(
+                    db,
+                    chat_id=chat_id,
+                    role="assistant",
+                    content=content_buffer,
+                    file_name=None,
+                    audio_content=None
+                )
 
         except Exception as e:
             raise e
+        
+        return StreamingResponse(stream_openai_response(),media_type="text/plain", headers={"X-Chat-Title": "title"})
 
     async def transcribe_audio(self, file):
         client = OpenAI(api_key=OPENAI_API_KEY)

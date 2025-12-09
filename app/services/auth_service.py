@@ -3,7 +3,7 @@ from app.database import get_db
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.services.firebase_service import verify_firebase_token
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.models.subscription_plan import SubscriptionPlan
 
 #not need to include or register in routes as it is not our an endpoint but will be used by other end points
@@ -27,7 +27,14 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
 
     user = db.query(User).filter(User.uid == uid).first()
 
-    # Get Free plan
+    if user and (datetime.utcnow() - user.last_reset) >= timedelta(days=1):
+        user.credits_left = user.plan.daily_credits
+        user.last_reset = datetime.utcnow()
+        db.commit()
+        print(f'Sign in check {user.last_reset}')
+
+
+      # Get Free plan
     if not user:
         # Ensure Free plan exists
         free_plan = db.query(SubscriptionPlan).filter_by(name="Free").first()
@@ -43,6 +50,8 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
         db.commit()
         db.refresh(user)
 
+
+  
     return user
 
 

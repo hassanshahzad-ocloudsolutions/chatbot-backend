@@ -25,18 +25,6 @@ class SubscriptionRepo:
         if not plan:
             raise ValueError("Plan not found")
         
-        #creates product and get stripe_price_id that will be stored inside subscription_plans table
-        if not plan.stripe_price_id and plan.price_cents > 0:
-            product = stripe.Product.create(name=plan.name)
-            price = stripe.Price.create(
-                product=product.id,
-                unit_amount=plan.price_cents,
-                currency="usd",
-                recurring={"interval": "month"}
-            )
-            plan.stripe_price_id = price.id
-            db.commit()
-
         if plan.price_cents == 0:
             # Free plan: assign directly
             user.subscription_id = plan.id

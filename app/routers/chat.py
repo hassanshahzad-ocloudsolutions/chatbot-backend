@@ -1,5 +1,7 @@
 
 from typing import List, Optional
+
+from fastapi.responses import StreamingResponse
 from app.database import get_db
 from fastapi import APIRouter,Depends, HTTPException, Query
 from app.models.user import User
@@ -57,12 +59,15 @@ async def send_message(
             raise e 
 
     # Generate AI response from Open AI
-    bot_response = ChatService.bot_response_service(db,chat_id,message,file)
+    bot_response =  ChatService.bot_response_service(db,chat_id,message,file) #storing bot response inside this function because of streamed output
 
-    # Store bot message
-    ChatService.save_message_service(db,chat_id=chat_id, role="assistant", content=bot_response, file_name=None, audio_content=None)
+    
+    return StreamingResponse(
+            bot_response.body_iterator,
+            media_type="text/plain",
+            headers={"X-Chat-Title": chat.title}
+        )
 
-    return {"response": bot_response}
 
 
 #central panel, loads all messages of specific selected chat
@@ -179,3 +184,4 @@ def rename_chat(chat_id: int, request: RenameChatRequest, db: Session = Depends(
         "id": updated_chat.id,
         "title": updated_chat.title
     }
+

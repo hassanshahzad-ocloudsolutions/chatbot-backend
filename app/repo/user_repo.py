@@ -23,20 +23,23 @@ class UserRepo:
     def deduct_credit(db: Session, user: User):
         if not user.plan:
             raise HTTPException("User has no subscription")
-        print(user.last_reset)
-        print(datetime.utcnow() - user.last_reset >= timedelta(days=1))
         if datetime.utcnow() - user.last_reset >= timedelta(days=1):
             user.credits_left = user.plan.daily_credits
             user.last_reset = datetime.utcnow()
             db.commit()
-            print(datetime.utcnow)
-            print(user.last_reset)
-        
-        print("Outside deduct if")
 
         if user.credits_left <= 0:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Daily credits exhausted")
 
         user.credits_left -= 1
         db.commit()
+
+    @staticmethod 
+    def get_credits(db:Session, user:User):
+        if (datetime.utcnow() - user.last_reset) >= timedelta(days=1):
+            user.credits_left = user.plan.daily_credits
+            user.last_reset = datetime.utcnow()
+            db.commit()
+        return user
+
 
