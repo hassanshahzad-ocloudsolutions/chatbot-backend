@@ -29,6 +29,7 @@ class UserRepo:
             user.last_reset = datetime.utcnow()
             db.commit()
             print(datetime.utcnow)
+            print(user.last_reset)
 
         if user.credits_left <= 0:
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Daily credits exhausted")
