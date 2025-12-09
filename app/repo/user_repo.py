@@ -23,7 +23,8 @@ class UserRepo:
     def deduct_credit(db: Session, user: User):
         if not user.plan:
             raise HTTPException("User has no subscription")
-
+        print(user.last_reset)
+        print(datetime.utcnow() - user.last_reset >= timedelta(days=1))
         if datetime.utcnow() - user.last_reset >= timedelta(days=1):
             user.credits_left = user.plan.daily_credits
             user.last_reset = datetime.utcnow()
