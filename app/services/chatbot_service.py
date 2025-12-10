@@ -13,7 +13,7 @@ import os
 import uuid
 import shutil
 from tempfile import gettempdir
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile
 import base64
 from fpdf import FPDF
 from fastapi.responses import StreamingResponse
@@ -130,14 +130,9 @@ class OpenAi(Provider):
                     "content": [{"type": content_type, "text": (m.content or "")+ (f"\n\n[Audio]: {m.audio_content}" if m.audio_content else "")}]
                 })
 
-        documents_extension = [
-            ".pdf",".txt"
-        ]
-
+        documents_extension = [".pdf",".txt"]
         audio_extensions = [".mp3"]
-
         image_extensions = [".png",".jpeg","jpg", "webp"]
-
         # Append user prompt
         user_message = {"type": "input_text", "text": prompt or ""}
 
@@ -209,38 +204,28 @@ class OpenAi(Provider):
         else:
             messages.append({"role": "user","content":[user_message]})
         
+        # Generate streaming response
         try:
-            def stream_openai_response():
-                content_buffer = ""
+            chunk_count = 0
 
-                with client.responses.stream(
-                    model=model,
-                    input=messages,
-                    temperature=temperature
-                ) as stream:
-                    for event in stream:
-                        if event.type == "response.output_text.delta" and event.delta:
-                            chunk = event.delta
-                            content_buffer += chunk
-                            yield chunk  # stream to frontend
+            with client.responses.stream(
+                model=model,
+                input=messages,
+                temperature=temperature,
+            ) as stream:
+                for event in stream:
+                    if event.type == "response.output_text.delta":
+                        content = event.delta
+                        if content:
+                            yield content
 
-                        elif event.type == "response.completed":
-                            break
-
-                # Save full response after streaming finishes
-                ChatService.save_message_service(
-                    db,
-                    chat_id=chat_id,
-                    role="assistant",
-                    content=content_buffer,
-                    file_name=None,
-                    audio_content=None
-                )
+                    elif event.type == "response.completed":
+                        break
 
         except Exception as e:
-            raise e
-        
-        return StreamingResponse(stream_openai_response(),media_type="text/plain", headers={"X-Chat-Title": "title"})
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error streaming AI response: {str(e)}")
 
     async def transcribe_audio(self, file):
         client = OpenAI(api_key=OPENAI_API_KEY)

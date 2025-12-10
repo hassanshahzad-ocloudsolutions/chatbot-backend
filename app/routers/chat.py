@@ -1,4 +1,5 @@
 
+import json
 from typing import List, Optional
 
 from fastapi.responses import StreamingResponse
@@ -58,10 +59,45 @@ async def send_message(
         except Exception as e:
             raise e 
 
-    # Generate AI response from Open AI
-    return ChatService.bot_response_service(db,chat_id,message,file) #storing bot response inside this function because of streamed output
+    # Create streaming response generator
+    async def generate_stream():
+        full_response = ""
+        
+        # First, send the chat title
+    
+        yield f"data: {json.dumps({'type': 'title', 'title': chat.title})}\n\n"
+        
+        try:
+            # Get the streaming response from chatbot service
+            for chunk in ChatService.bot_response_service(db, chat_id, message, file):
+                full_response += chunk
+                # Send each chunk as SSE (Server-Sent Events) format frontend will gradually receives the chunks and display
+                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+            
+            # Send completion signal that no chunks to send now
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
-
+            # Store the complete bot message
+            ChatService.save_message_service(
+                db, 
+                chat_id=chat_id, 
+                role="assistant", 
+                content=full_response, 
+                file_name=None, 
+                audio_content=None
+            )
+            
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/event-stream", #this will tell browser that it is SSE.
+        headers={
+            "Cache-Control": "no-cache", #avoids caching or buffering and send the chunk immediately.
+            "Connection": "keep-alive",
+        }
+    )
 
 
 #central panel, loads all messages of specific selected chat
@@ -75,7 +111,7 @@ async def get_messages(chat_id:int, db: Session = Depends(get_db), user: User = 
 
 #left panel displaying the chat history of user
 @router.get("/", response_model=List[ChatResponse])
-async def charts_history(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+async def chats_history(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     chats = ChatService.fetch_chat_history_service(db, user_id=user.uid)
     return chats
 
