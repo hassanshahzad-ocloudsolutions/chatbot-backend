@@ -44,7 +44,8 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
             email=email,
             subscription_id=free_plan.id,
             credits_left=free_plan.daily_credits,
-            last_reset=datetime.utcnow()
+            last_reset=datetime.utcnow(),
+            stripe_subscription_id=None
         )
         db.add(user)
         db.commit()

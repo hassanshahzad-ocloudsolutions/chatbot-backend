@@ -65,17 +65,17 @@ async def send_message(
         
         # First, send the chat title
     
-        yield f"data: {json.dumps({'type': 'title', 'title': chat.title})}\n\n"
+        yield f"data: {json.dumps({'type': 'title', 'title': chat.title})}"
         
         try:
             # Get the streaming response from chatbot service
             for chunk in ChatService.bot_response_service(db, chat_id, message, file):
                 full_response += chunk
                 # Send each chunk as SSE (Server-Sent Events) format frontend will gradually receives the chunks and display
-                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
+                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}"
             
             # Send completion signal that no chunks to send now
-            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            yield f"data: {json.dumps({'type': 'done'})}"
 
             # Store the complete bot message
             ChatService.save_message_service(
