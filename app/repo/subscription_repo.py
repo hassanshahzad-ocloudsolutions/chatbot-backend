@@ -44,23 +44,29 @@ class SubscriptionRepo:
         if user.stripe_subscription_id:
             # Load current local plan
             current_plan = SubscriptionRepo.get_plan(db, user.subscription_id)
+            print(current_plan.id)
 
             # Retrieve stripe subscription to access items and metadata
             try:
                 stripe_sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
+                print("Inside try of user.stripe_subscription_id ")
+                print(stripe_sub)
             except stripe.error.StripeError as e:
                 raise HTTPException(status_code=502, detail=f"Failed to retrieve Stripe subscription: {e}")
 
             # Safeguard: ensure there is at least one subscription item
             items = stripe_sub.get("items", {}).get("data", [])
+            print(items)
             if not items:
                 raise HTTPException(status_code=400, detail="Stripe subscription has no items")
 
             subscription_item_id = items[0]["id"]
+            print(subscription_item_id)
 
             # Upgrade: immediate (new price > current)
             if new_plan.price_cents > (current_plan.price_cents or 0):
                 try:
+                    print("In Upgrade")
                     stripe.Subscription.modify(
                         user.stripe_subscription_id,
                         cancel_at_period_end=False,
@@ -69,29 +75,45 @@ class SubscriptionRepo:
                             "price": new_plan.stripe_price_id
                         }],
                         proration_behavior="none",
-                        metadata={"pending_plan_id": ""}  # clear pending downgrades if any
+                        billing_cycle_anchor="now",
+                        metadata={"pending_plan_id": "","uid":str(user.uid)}  # clear pending downgrades if any
                     )
+                    items = stripe_sub.get("items", {}).get("data", [])
+                    subscription_item_id = items[0]["id"]
+                    print(subscription_item_id)
+
                 except stripe.error.StripeError as e:
                     raise HTTPException(status_code=502, detail=f"Stripe error while upgrading: {e}")
-
+                print("Updating DB upgrade")
                 # Update DB immediately
                 user.subscription_id = new_plan.id
                 user.credits_left = new_plan.daily_credits
                 user.last_reset = datetime.utcnow()
                 db.commit()
+                print(user.subscription_id)
                 return {"message": f"Upgraded to {new_plan.name} immediately"}
             
                # Downgrade: delayed -> use metadata pending_plan_id (no immediate DB change)
             elif new_plan.price_cents < (current_plan.price_cents or 0):
                 try:
                     print("In downgrade")
-                    # Keep subscription active, set pending_plan_id so we apply at next billing cycle
+                    current_subscription = stripe.Subscription.retrieve(user.stripe_subscription_id)
+                    subscription_item_id = current_subscription["items"]["data"][0]["id"]
                     stripe.Subscription.modify(
                         user.stripe_subscription_id,
                         cancel_at_period_end=False,
-                        proration_behavior="none",
-                        metadata={"pending_plan_id": str(new_plan.id)}
-                    )
+                        items=[{
+                        "id": subscription_item_id,
+                        "price": new_plan.stripe_price_id}],
+                        proration_behavior="none",  # No immediate charge or credit
+                        billing_cycle_anchor="unchanged",  # Keep current billing date (Jan 20)
+                        metadata={
+                            "pending_downgrade": "true",
+                            "old_plan_id": str(current_plan.id),
+                            "new_plan_id": str(new_plan.id)})
+                    
+                    print(f"Downgrade applied to Stripe: Next payment will be ${new_plan.price_cents/100}")
+                    
                 except stripe.error.StripeError as e:
                     raise HTTPException(status_code=502, detail=f"Stripe error while scheduling downgrade: {e}")
 

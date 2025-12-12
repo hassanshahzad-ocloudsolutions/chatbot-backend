@@ -27,7 +27,7 @@ def subscribe_plan(plan_id: int, db: Session = Depends(get_db),
 @router.post("/cancel")
 def cancel_subscription(db: Session = Depends(get_db),
                         user: User = Depends(get_current_user)):
-    if not user.subscription_id:
+    if not user.subscription_id or not user.stripe_subscription_id:
         raise HTTPException(status_code=400, detail="No active subscription to cancel")
     SubscriptionService.set_cancel_user_subscription_service(db, user)
     return {"message": "Subscription cancelled. You will be downgraded to Free plan with 5 daily credits after the billing month ends."}
