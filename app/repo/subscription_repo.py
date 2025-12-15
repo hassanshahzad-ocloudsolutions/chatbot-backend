@@ -76,22 +76,20 @@ class SubscriptionRepo:
                         }],
                         proration_behavior="none",
                         billing_cycle_anchor="now",
-                        metadata={"pending_plan_id": "","uid":str(user.uid)}  # clear pending downgrades if any
+                        metadata={"pending_plan_id": "",
+                                  "uid":str(user.uid),
+                                  "plan_id": str(new_plan.id)}
                     )
+                    print(f"Upgrade initiated in Stripe to plan {new_plan.id}")
                     items = stripe_sub.get("items", {}).get("data", [])
                     subscription_item_id = items[0]["id"]
                     print(subscription_item_id)
 
                 except stripe.error.StripeError as e:
                     raise HTTPException(status_code=502, detail=f"Stripe error while upgrading: {e}")
-                print("Updating DB upgrade")
-                # Update DB immediately
-                user.subscription_id = new_plan.id
-                user.credits_left = new_plan.daily_credits
-                user.last_reset = datetime.utcnow()
-                db.commit()
-                print(user.subscription_id)
-                return {"message": f"Upgraded to {new_plan.name} immediately"}
+                return {
+                "message": f"Upgrade to {new_plan.name} initiated. You'll be charged the  amount.",
+                "note": "Your plan will be updated once payment is confirmed."}
             
                # Downgrade: delayed -> use metadata pending_plan_id (no immediate DB change)
             elif new_plan.price_cents < (current_plan.price_cents or 0):
@@ -108,11 +106,12 @@ class SubscriptionRepo:
                         proration_behavior="none",  # No immediate charge or credit
                         billing_cycle_anchor="unchanged",  # Keep current billing date (Jan 20)
                         metadata={
-                            "pending_downgrade": "true",
                             "old_plan_id": str(current_plan.id),
-                            "new_plan_id": str(new_plan.id)})
+                            "plan_id": str(new_plan.id),
+                            "uid": str(user.uid),
+                            "pending_downgrade": "true"})
                     
-                    print(f"Downgrade applied to Stripe: Next payment will be ${new_plan.price_cents/100}")
+                    print(f"Downgrade scheduled: Next payment will be ${new_plan.price_cents/100}")
                     
                 except stripe.error.StripeError as e:
                     raise HTTPException(status_code=502, detail=f"Stripe error while scheduling downgrade: {e}")
@@ -131,16 +130,18 @@ class SubscriptionRepo:
                             "price": new_plan.stripe_price_id
                         }],
                         proration_behavior="none",
-                        metadata={"pending_plan_id": ""}  # clear pending downgrades if any
+                        metadata={"pending_plan_id": "",
+                                  "uid": str(user.uid),
+                                  "plan_id": str(new_plan.id) }  # clear pending downgrades if any
                     )
                 except stripe.error.StripeError as e:
                     raise HTTPException(status_code=502, detail=f"Stripe error while switching plan: {e}")
 
-                user.subscription_id = new_plan.id
-                user.credits_left = new_plan.daily_credits
-                user.last_reset = datetime.utcnow()
-                db.commit()
-                return {"message": f"Switched to {new_plan.name} immediately"}
+                return {
+                "message": f"Switch to {new_plan.name} initiated.",
+                "note": "Your plan will be updated shortly."
+            }
+
 
             
         # No existing stripe subscription -> create a Checkout Session to start a new subscription
