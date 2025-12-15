@@ -14,6 +14,7 @@ class User(Base):
     credits_left = Column(Integer, default=5)
     last_reset = Column(DateTime, default=datetime.utcnow)
     stripe_subscription_id = Column(String, nullable=True)
+    subscription_status = Column(String,default="inactive",nullable=False)
 
     chats = relationship("Chat", back_populates="user")
     plan = relationship("SubscriptionPlan", back_populates="users")

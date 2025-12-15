@@ -16,6 +16,7 @@ class UserRepo:
         user.last_reset = datetime.utcnow()
         if stripe_subscription_id:
             user.stripe_subscription_id = stripe_subscription_id
+            user.subscription_status = "active"
         db.commit()
         return user
 
