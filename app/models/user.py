@@ -11,7 +11,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     subscription_id = Column(Integer, ForeignKey("subscription_plans.id"), nullable=True ,default=1)
-    credits_left = Column(Integer, default=5)
+    credits_left = Column(Integer, default=10)
     last_reset = Column(DateTime, default=datetime.utcnow)
     stripe_subscription_id = Column(String, nullable=True)
     subscription_status = Column(String,default="inactive",nullable=False)

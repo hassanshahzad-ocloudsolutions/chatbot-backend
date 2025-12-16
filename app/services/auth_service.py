@@ -5,6 +5,7 @@ from app.models.user import User
 from app.services.firebase_service import verify_firebase_token
 from datetime import datetime, timedelta
 from app.models.subscription_plan import SubscriptionPlan
+from dateutil.relativedelta import relativedelta
 
 #not need to include or register in routes as it is not our an endpoint but will be used by other end points
 
@@ -27,13 +28,22 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
 
     user = db.query(User).filter(User.uid == uid).first()
 
-    if user and (datetime.utcnow() - user.last_reset) >= timedelta(days=1):
-        user.credits_left = user.plan.daily_credits
-        user.last_reset = datetime.utcnow()
-        db.commit()
-        print(f'Sign in check {user.last_reset}')
+    if user:
+        now = datetime.utcnow()
+        if user.subscription_id==1:
+            if user.last_reset - now >= timedelta(days=1):
+                user.credits_left = user.plan.daily_credits
+                user.last_reset = now
+                db.commit()
+        
+        elif user.subscription_id in (2,3):
+            if user.last_reset + relativedelta(months=1)<=now:
+                user.credits_left = user.plan.monthly_credits
+                user.last_reset=now
+                db.commit()
 
 
+    #If user first times come to website
       # Get Free plan
     if not user:
         # Ensure Free plan exists

@@ -97,7 +97,7 @@ class SubscriptionService:
                 stripe_sub
             )
             return {
-            "status": "pending_payment",
+            "status": "pending_payment_same_plan",
             "message": "Subscription reactivated without any charge as you were on this plan before. Payment will be charged in next billing cycle."
             }
 

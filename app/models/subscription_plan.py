@@ -12,6 +12,7 @@ class SubscriptionPlan(Base):
     price_cents = Column(Integer, default=0)    # 0 for free plan
     stripe_price_id = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    monthly_credits = Column(Integer, default=0)  # new column for monthly plans
 
     users = relationship("User", back_populates="plan")
 

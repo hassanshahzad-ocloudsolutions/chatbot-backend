@@ -16,7 +16,7 @@ class SubscriptionRepo:
 
     @staticmethod
     def get_all_plans(db: Session):
-        return db.query(SubscriptionPlan).all()
+        return db.query(SubscriptionPlan).order_by(SubscriptionPlan.id).all()
 
     @staticmethod
     def set_cancellation(db: Session, user: User):

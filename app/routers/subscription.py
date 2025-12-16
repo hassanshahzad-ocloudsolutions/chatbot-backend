@@ -43,5 +43,6 @@ def get_current_subscription(db:Session= Depends(get_db), user:User = Depends(ge
         "subscription_name": subscription_name, 
         "credits_left": user.credits_left,
         "last_reset": user.last_reset,
-        "stripe_subscription_id": user.stripe_subscription_id
+        "stripe_subscription_id": user.stripe_subscription_id,
+        "subscription_status":user.subscription_status
     }
