@@ -15,8 +15,7 @@ def get_plans(db: Session = Depends(get_db)):
     return SubscriptionService.get_plans_service(db)
 
 @router.post("/subscribe/{plan_id}")
-def subscribe_plan(plan_id: int, db: Session = Depends(get_db),
-                   user: User = Depends(get_current_user)):
+def subscribe_plan(plan_id: int, db: Session = Depends(get_db),user: User = Depends(get_current_user)):
     success_url = STRIPE_SUCCESS_URL 
     cancel_url = STRIPE_FAILURE_URL 
     try:

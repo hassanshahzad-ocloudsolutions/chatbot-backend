@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
 
 class CurrentSubscriptionSchema(BaseModel):
     subscription_id: Optional[int]
@@ -10,3 +9,9 @@ class CurrentSubscriptionSchema(BaseModel):
 
     class Config:
         orm_mode = True
+
+#after subscription is done
+class SubscriptionResponse(BaseModel):
+    status: str  
+    message: str
+    checkout_url: Optional[str] = None

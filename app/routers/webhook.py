@@ -21,14 +21,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     # Verify the webhook signature
     try:
-        event = stripe.Webhook.construct_event(
-            payload=payload, sig_header=sig_header, secret=WEBHOOK_SECRET
-        )
+        event = stripe.Webhook.construct_event(payload=payload, sig_header=sig_header, secret=WEBHOOK_SECRET)
         print(json.dumps(event, separators=(',', ':')))
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid payload")
-    except stripe.error.SignatureVerificationError:
-        raise HTTPException(status_code=400, detail="Invalid signature")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid webhook")
 
       # Handle events
     if event.type == "invoice.payment_succeeded":
@@ -45,25 +41,24 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
         # Find user by uid
         user = db.query(User).filter(User.uid == uid).first()
-        if user:
-            try:
-                # Use your change_subscription function to reset credits
-                UserService.change_subscription_service(
+        if not user:
+            return {"status": "user_not_found"}
+        
+        try:
+            UserService.change_subscription_service(
                     db=db,
                     user=user,
                     new_plan_id=int(plan_id), 
                     stripe_subscription_id=stripe_subscription_id
                 )
-            except Exception as e:
-                # Log or handle error; don't fail webhook entirely
-                return {"details":"Error applying checkout subscription to DB"}
-
-        # Clear metadata after successful update
-        stripe.Subscription.modify(
+              # Clear metadata after successful update
+            stripe.Subscription.modify(
             stripe_subscription_id,
-            metadata={**metadata,"plan_id": ""}
-        )
-        return {"status": "success"}
+            metadata={**metadata,"plan_id": ""})
+            return {"status": "success"}
+        
+        except Exception as e:
+            return {"status": "error", "detail": str(e)} 
 
     elif event.type=="customer.subscription.deleted":
         # Get subscription ID
@@ -94,6 +89,9 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             SubscriptionService.cancel_user_subscription_and_set_free_plan_service(db, user)
             return {"status": "success", "event": "customer.subscription.deleted"}
         return {"status": "ignored", "reason": "User not found"}
+    
+    else:
+        return {"status": "ignored"}
     
     
 

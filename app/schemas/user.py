@@ -5,6 +5,7 @@ from typing import List, Optional
 # Base schema shared across create/response
 class UserBase(BaseModel):
     email: EmailStr
+    subscription_status: str
 
 # Used when creating a user
 class UserCreate(UserBase):
