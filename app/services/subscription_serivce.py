@@ -36,6 +36,7 @@ class SubscriptionService:
                     line_items=[{"price": new_plan.stripe_price_id, "quantity": 1}],
                     success_url=success_url,
                     cancel_url=cancel_url,
+                    customer_email=user.email,
                     subscription_data={
                         "metadata": {
                             "user_id": str(user.uid),
