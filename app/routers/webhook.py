@@ -30,12 +30,20 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     if event.type == "invoice.payment_succeeded":
         invoice = event.data.object
         # Get subscription ID
-        stripe_subscription_id = invoice["lines"]["data"][0]["parent"]["subscription_item_details"]["subscription"]
-        # Get metadata
-        metadata = invoice["lines"]["data"][0]["metadata"]
-        uid = metadata.get("user_id")
-        plan_id= metadata.get("plan_id")
+        
+        lines = invoice.get("lines", {}).get("data", [])
+        first_line = lines[0] if len(lines) > 0 else {}
+
+        stripe_subscription_id = (
+        first_line.get("parent", {})
+        .get("subscription_item_details", {})
+        .get("subscription"))
     
+        # Get metadata
+        metadata = first_line.get("metadata", {})
+        uid = metadata.get("user_id", None)
+        plan_id= metadata.get("plan_id", None)
+  
         if not uid or not plan_id:
             return {"status": "ignored - missing metadata"}
 
@@ -61,8 +69,12 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             return {"status": "error", "detail": str(e)} 
 
     elif event.type=="customer.subscription.deleted":
-        # Get subscription ID
-        stripe_subscription_id =  event.data.object["id"]
+        invoice = event.data.object
+        stripe_subscription_id = invoice.get("id")
+
+        if not stripe_subscription_id:
+            raise ValueError("Stripe subscription ID is missing in event.data.object")
+        
         user = db.query(User).filter(User.stripe_subscription_id == stripe_subscription_id).first()
         if user:    
             SubscriptionService.cancel_user_subscription_and_set_free_plan_service(db, user)
@@ -71,23 +83,23 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     
     elif event.type == "invoice.payment_failed":
         invoice = event.data.object
-        metadata = invoice["lines"]["data"][0]["metadata"]
+
+        lines = invoice.get("lines", {}).get("data", [])
+        first_line = lines[0] if len(lines) > 0 else {}
+
+        stripe_subscription_id = (
+        first_line.get("parent", {})
+        .get("subscription_item_details", {})
+        .get("subscription", None))
+
+        metadata = first_line.get("metadata", {})
         uid = metadata.get("user_id")
-        stripe_subscription_id = invoice["lines"]["data"][0]["parent"]["subscription_item_details"]["subscription"]
+
         # Find user by stripe_subscription_id
         user = db.query(User).filter(User.stripe_subscription_id == stripe_subscription_id).first()
         if user:    
             SubscriptionService.cancel_user_subscription_and_set_free_plan_service(db, user)
             return {"status": "success", "event": "Payment failed so cancelled the subscription"}
-        return {"status": "ignored", "reason": "User not found"}
-
-    elif event.type=="customer.subscription.deleted":
-        # Get subscription ID
-        stripe_subscription_id =  event.data.object["id"]
-        user = db.query(User).filter(User.stripe_subscription_id == stripe_subscription_id).first()
-        if user:    
-            SubscriptionService.cancel_user_subscription_and_set_free_plan_service(db, user)
-            return {"status": "success", "event": "customer.subscription.deleted"}
         return {"status": "ignored", "reason": "User not found"}
     
     else:

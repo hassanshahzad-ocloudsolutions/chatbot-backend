@@ -13,10 +13,6 @@ load_dotenv()
 
 app = FastAPI()
 
-# Create tables
-#Base.metadata.create_all(bind=engine)
-
-
 app.include_router(chat.router)
 app.include_router(subscription.router)
 app.include_router(webhook.router)
@@ -28,6 +24,11 @@ origins = [
     os.getenv("LOCALHOST_PATH1"), #local
     os.getenv("LOCALHOST_PATH2") #network
 ]
+
+origins = [origin for origin in origins if origin]
+
+if not origins:
+    raise ValueError("At least one CORS origin must be configured")
 
 app.add_middleware(
     CORSMiddleware,

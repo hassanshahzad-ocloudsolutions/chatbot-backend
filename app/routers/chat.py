@@ -122,7 +122,7 @@ async def delete_chat(chat_id:int, db: Session = Depends(get_db), user: User= De
     return {"message": f"Chat {chat_id} deleted successfully"}
 
 #generating shareable link of a specifc chat
-@router.get("/share/{chat_id}")
+@router.post("/share/{chat_id}")
 async def create_shareable_link(chat_id:int, db:Session = Depends(get_db), user:User =Depends(get_current_user)):
     try: 
         chat = ChatService.get_chat_by_id_service(db, chat_id=chat_id, user_id=user.uid)
