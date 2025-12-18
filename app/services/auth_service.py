@@ -27,10 +27,10 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
         raise HTTPException(status_code=401, detail="Invalid Firebase token")
 
     user = db.query(User).filter(User.uid == uid).first()
-    print(user.email)
+
 
     if user:
-        print("In sign in user")
+        print("In sign in user if block")
         now = datetime.utcnow()
         if user.subscription_id==1:
             if user.last_reset - now >= timedelta(days=1):
