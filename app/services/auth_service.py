@@ -30,7 +30,6 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
 
 
     if user:
-        print("In sign in user if block")
         now = datetime.utcnow()
         if user.subscription_id==1:
             if user.last_reset - now >= timedelta(days=1):
@@ -48,7 +47,6 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
     #If user first times come to website
       # Get Free plan
     if not user:
-        print("Inside user adding in database")
         # Ensure Free plan exists
         free_plan = db.query(SubscriptionPlan).filter_by(name="Free").first()
         # Create new user with Free plan

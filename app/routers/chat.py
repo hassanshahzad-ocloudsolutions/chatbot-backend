@@ -62,6 +62,7 @@ async def send_message(
     # Create streaming response generator
     async def generate_stream():
         full_response = ""
+        buffer=""
         
         # First, send the chat title
     
@@ -70,10 +71,14 @@ async def send_message(
         try:
             # Get the streaming response from chatbot service
             for chunk in ChatService.bot_response_service(db, chat_id, message, file):
-                full_response += chunk
-                # Send each chunk as SSE (Server-Sent Events) format frontend will gradually receives the chunks and display
-                yield f"data: {json.dumps({'type': 'chunk', 'content': chunk})}\n\n"
-            
+                full_response += chunk #for stroing in db
+                buffer += chunk
+                if len(buffer) >= 20:
+                    yield f"data: {json.dumps({'type': 'chunk', 'content': buffer})}\n\n"
+                    buffer = ""
+                
+            if buffer:
+                yield f"data: {json.dumps({'type': 'chunk', 'content': buffer})}\n\n"
             # Send completion signal that no chunks to send now
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
 
@@ -96,6 +101,7 @@ async def send_message(
         headers={
             "Cache-Control": "no-cache", #avoids caching or buffering and send the chunk immediately.
             "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
         }
     )
 
