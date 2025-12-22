@@ -22,7 +22,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     # Verify the webhook signature
     try:
         event = stripe.Webhook.construct_event(payload=payload, sig_header=sig_header, secret=WEBHOOK_SECRET)
-        print(json.dumps(event, separators=(',', ':')))
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid webhook")
 

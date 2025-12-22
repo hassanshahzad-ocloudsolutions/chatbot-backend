@@ -26,7 +26,6 @@ origins = [
 ]
 
 origins = [origin for origin in origins if origin]
-print(origins)
 if not origins:
     raise ValueError("At least one CORS origin must be configured")
 

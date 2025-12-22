@@ -60,6 +60,7 @@ class SubscriptionService:
         # Upgrade: immediate (new price > current)
         if new_plan.id > current_plan.id:
             SubscriptionActions.upgrade_subscription(
+                user,
                 new_plan.id,
                 user.stripe_subscription_id,
                 subscription_item_id,
@@ -77,7 +78,6 @@ class SubscriptionService:
                 db,
                 new_plan.id,
                 user.stripe_subscription_id,
-                subscription_item_id,
                 new_plan.stripe_price_id,
                 stripe_sub #for metadata
             )
