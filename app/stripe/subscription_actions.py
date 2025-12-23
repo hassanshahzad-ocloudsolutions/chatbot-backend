@@ -11,12 +11,11 @@ class SubscriptionActions:
     @staticmethod
     def upgrade_subscription(new_plan_id,stripe_subscription_id, subscription_item_id, stripe_price_id, stripe_sub):
         try:
-            existing_schedules = stripe.SubscriptionSchedule.list(limit=100)
-            schedule = next((s for s in existing_schedules.data if s.subscription == stripe_subscription_id), None)
-
+            subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+            schedule_id = subscription.get('schedule')
         # If a schedule exists, release it so we can modify the subscription directly
-            if schedule:
-                stripe.SubscriptionSchedule.release(schedule.id)
+            if schedule_id:
+                stripe.SubscriptionSchedule.release(schedule_id)
 
             stripe.Subscription.modify(
                 stripe_subscription_id,
@@ -88,21 +87,21 @@ class SubscriptionActions:
     @staticmethod
     def switch_same_plan(user:User,db:Session, new_plan_id, stripe_subscription_id, subscription_item_id, stripe_price_id, stripe_sub):
         try:
-            existing_schedules = stripe.SubscriptionSchedule.list(limit=100)
-            schedule = next((s for s in existing_schedules.data if s.subscription == stripe_subscription_id), None)
-
+            subscription = stripe.Subscription.retrieve(stripe_subscription_id)
+            schedule_id = subscription.get('schedule')
         # If a schedule exists, release it so we can modify the subscription directly
-            if schedule:
-                stripe.SubscriptionSchedule.release(schedule.id)
-                stripe.Subscription.modify(
-                    stripe_subscription_id,
-                    cancel_at_period_end=False,
-                    items=[{
-                        "id": subscription_item_id,
-                        "price": stripe_price_id
-                        }],
-                    proration_behavior="none",
-                    metadata={**stripe_sub.metadata,"plan_id": str(new_plan_id)})
+            if schedule_id:
+                stripe.SubscriptionSchedule.release(schedule_id)
+
+            stripe.Subscription.modify(
+                stripe_subscription_id,
+                cancel_at_period_end=False,
+                items=[{
+                    "id": subscription_item_id,
+                    "price": stripe_price_id
+                    }],
+                proration_behavior="none",
+                metadata={**stripe_sub.metadata,"plan_id": str(new_plan_id)})
             
         except stripe.error.StripeError as e:
             raise HTTPException(status_code=502, detail=f"Stripe error while switching plan: {e}")

@@ -60,7 +60,6 @@ class SubscriptionService:
         # Upgrade: immediate (new price > current)
         if new_plan.id > current_plan.id:
             SubscriptionActions.upgrade_subscription(
-                user,
                 new_plan.id,
                 user.stripe_subscription_id,
                 subscription_item_id,
@@ -104,7 +103,26 @@ class SubscriptionService:
 
     @staticmethod
     def set_cancel_user_subscription_service(db:Session, user:User):
-        return SubscriptionRepo.set_cancellation(db, user)
+        if not user.stripe_subscription_id:
+            raise ValueError("User has no active Stripe subscription")
+        subscription = stripe.Subscription.retrieve(user.stripe_subscription_id)
+        schedule_id = subscription.get('schedule')
+        # If a schedule exists, release it so we can modify the subscription directly
+        if schedule_id:
+            stripe.SubscriptionSchedule.release(schedule_id)
+
+        try:
+            stripe.Subscription.modify(
+                user.stripe_subscription_id,
+                cancel_at_period_end=True
+            )
+
+        except Exception as e:  # fallback for any Stripe error
+            raise ValueError(f"Stripe error: {e}")
+        
+        user.subscription_status = "cancel"
+        db.commit()
+        return user
     
     @staticmethod
     def cancel_user_subscription_and_set_free_plan_service(db:Session, user: User):
