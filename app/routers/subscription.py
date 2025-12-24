@@ -22,10 +22,7 @@ def subscribe_plan(plan_id: int, db: Session = Depends(get_db),user: User = Depe
         return SubscriptionService.subscribe_user_service(db, user, plan_id, success_url, cancel_url)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-    except HTTPException as e:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+   
     
 @router.post("/cancel")
 def cancel_subscription(db: Session = Depends(get_db),

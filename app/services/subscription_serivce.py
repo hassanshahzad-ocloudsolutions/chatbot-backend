@@ -1,11 +1,14 @@
 
-from fastapi import HTTPException, logger
+from fastapi import HTTPException
+import logging
 from sqlalchemy.orm import Session
 import stripe
 from app.models.user import User
 from app.repo.subscription_repo import SubscriptionRepo
 from app.schemas.subscription import SubscriptionResponse
 from app.stripe.subscription_actions import SubscriptionActions
+
+logger = logging.getLogger("uvicorn.error")
 
 class SubscriptionService:
 
