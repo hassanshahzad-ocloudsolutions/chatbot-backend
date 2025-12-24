@@ -16,6 +16,7 @@ from fastapi import Form, File, UploadFile
 from uuid import UUID
 from app.services.chat_service import ChatService
 from app.config import SHARE_URL
+from app.rate_limiter import rate_limit
 
 router = APIRouter(
     prefix="/chats",
@@ -35,7 +36,8 @@ async def send_message(
     message: str = Form(None),
     file: UploadFile = File(None),
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
+    limit=Depends(rate_limit)
 ):
     # Verify chat belongs to user
     try: 
