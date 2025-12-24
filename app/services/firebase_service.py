@@ -1,11 +1,20 @@
+import os
 import firebase_admin
 from firebase_admin import credentials, auth
-from app.config import FIREBASE_CREDENTIALS
+from app.config import FIREBASE_KEY
 from fastapi import HTTPException, status
 import json
+from cryptography.fernet import Fernet
 
+fernet = Fernet(FIREBASE_KEY.encode())
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # app/
+file_path = os.path.join(BASE_DIR, "firebase_encrypted_credentials.txt")
 
-firebase_json = json.loads(FIREBASE_CREDENTIALS)  
+with open(file_path, "rb") as f:  # binary mode
+    encrypted_data = f.read()
+
+decrypted_json_str = fernet.decrypt(encrypted_data).decode()
+firebase_json = json.loads(decrypted_json_str)
 
 # Initialize Firebase app only once
 if not firebase_admin._apps:

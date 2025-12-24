@@ -7,7 +7,6 @@ load_dotenv()
 # Database URL for PostgreSQL
 DATABASE_URL = os.getenv("DATABASE_URL")
 # Firebase service account path
-FIREBASE_CREDENTIALS = os.getenv("FIREBASE_CREDENTIALS")
 
 #OLLAMA
 OLLAMA_API_URL=os.getenv("OLLAMA_API_URL")
@@ -29,3 +28,5 @@ STRIPE_FAILURE_URL=os.getenv("STRIPE_FAILURE_URL")
 SHARE_URL=os.getenv("SHARE_URL")
 
 REDIS_URL = os.getenv("REDIS_URL")
+
+FIREBASE_KEY = os.getenv("FIREBASE_KEY")
