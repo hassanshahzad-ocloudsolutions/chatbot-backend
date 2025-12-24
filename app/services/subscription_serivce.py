@@ -1,5 +1,5 @@
 
-from fastapi import HTTPException
+from fastapi import HTTPException, logger
 from sqlalchemy.orm import Session
 import stripe
 from app.models.user import User
@@ -50,7 +50,25 @@ class SubscriptionService:
             }
 
             except stripe.error.StripeError as e:
-                raise HTTPException(status_code=502, detail=f"Stripe Checkout creation failed: {e}")
+                logger.error("StripeError occurred", exc_info=True)
+                # Extract useful details
+                err_type = type(e).__name__
+                err_msg = str(e)
+                status_code = getattr(e, "http_status", "N/A")
+                stripe_code = getattr(e, "code", "N/A")
+                request_id = getattr(e, "request_id", "N/A")
+            
+                raise HTTPException(
+                    status_code=502,
+                    detail={
+                        "error_type": err_type,
+                        "message": err_msg,
+                        "http_status": status_code,
+                        "stripe_code": stripe_code,
+                        "request_id": request_id
+                    }
+                )
+
 
         #In case user is already on some subscription
         stripe_sub = stripe.Subscription.retrieve(user.stripe_subscription_id)
