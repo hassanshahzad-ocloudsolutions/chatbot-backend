@@ -6,7 +6,6 @@ from app.services.subscription_serivce import SubscriptionService
 from app.services.user_service import UserService
 from app.services.auth_service import get_current_user
 from app.models.user import User
-from app.config import STRIPE_SUCCESS_URL,STRIPE_FAILURE_URL
 
 router = APIRouter(prefix="/subscription", tags=["subscription"])
 
@@ -16,8 +15,10 @@ def get_plans(db: Session = Depends(get_db)):
 
 @router.post("/subscribe/{plan_id}")
 def subscribe_plan(plan_id: int, db: Session = Depends(get_db),user: User = Depends(get_current_user)):
-    success_url = STRIPE_SUCCESS_URL 
-    cancel_url = STRIPE_FAILURE_URL 
+    success_url = "https://neural-chat-ui.vercel.app/payment/success"
+    cancel_url = "https://neural-chat-ui.vercel.app/payment/failed"
+    print(success_url)
+    print(cancel_url)
     try:
         return SubscriptionService.subscribe_user_service(db, user, plan_id, success_url, cancel_url)
     except ValueError as e:
