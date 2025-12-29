@@ -6,7 +6,8 @@ from app.services.firebase_service import verify_firebase_token
 from datetime import datetime, timedelta
 from app.models.subscription_plan import SubscriptionPlan
 from dateutil.relativedelta import relativedelta
-
+from app.services.cron_service import CronService 
+from sqlalchemy.exc import IntegrityError
 #not need to include or register in routes as it is not our an endpoint but will be used by other end points
 
 def get_current_user(authorization: str = Header(...), db: Session = Depends(get_db)):
@@ -26,6 +27,9 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
     if not uid or not email:
         raise HTTPException(status_code=401, detail="Invalid Firebase token")
 
+    #clearing the cache to prevent integrity issues
+    db.rollback()
+    db.expunge_all() 
     user = db.query(User).filter(User.uid == uid).first()
 
 
@@ -46,24 +50,33 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
 
     #If user first times come to website
       # Get Free plan
+   
     if not user:
+        try:
         # Ensure Free plan exists
-        free_plan = db.query(SubscriptionPlan).filter_by(name="Free").first()
-        # Create new user with Free plan
-        user = User(
-            uid=uid,
-            email=email,
-            subscription_id=free_plan.id,
-            credits_left=free_plan.daily_credits,
-            last_reset=datetime.utcnow(),
-            stripe_subscription_id=None
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-
-  
+            free_plan = db.query(SubscriptionPlan).filter_by(name="Free").first()
+            # Create new user with Free plan
+            user = User(
+                uid=uid,
+                email=email,
+                subscription_id=free_plan.id,
+                credits_left=free_plan.daily_credits,
+                last_reset=datetime.utcnow(),
+                stripe_subscription_id=None
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            CronService.create_cron_for_user(db, user)
+        
+        except IntegrityError:
+            # Race condition: user was created by another request
+            db.rollback()
+            db.expunge_all()
+            
+            # Fetch the user that was just created
+            user = db.query(User).filter(User.uid == uid).first()
+            
     return user
 
 

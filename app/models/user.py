@@ -18,3 +18,4 @@ class User(Base):
 
     chats = relationship("Chat", back_populates="user")
     plan = relationship("SubscriptionPlan", back_populates="users")
+    cron_job = relationship("CronJob", back_populates="user",uselist=False,cascade="all, delete-orphan")
