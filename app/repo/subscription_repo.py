@@ -5,6 +5,7 @@ import stripe
 from app.config import STRIPE_API_KEY
 from datetime import datetime
 from fastapi import HTTPException
+from app.services.cron_service import CronService
 
 stripe.api_key = STRIPE_API_KEY
 
@@ -35,6 +36,7 @@ class SubscriptionRepo:
         user.subscription_status = "deleted"
 
         db.commit()
+        CronService.activate_cron(db,user.uid)
         return user
     
     @staticmethod

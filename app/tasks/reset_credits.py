@@ -1,8 +1,9 @@
-from datetime import datetime, timedelta, timezone
-from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
 from app.database import SessionLocal
 from app.models.user import User
 import logging 
+from app.services.cron_service import schedule_job  
+from app.models.cron_job import CronJob
 
 logging.basicConfig(
     level=logging.INFO, 
@@ -11,12 +12,12 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__) 
 
-def reset_user_credits(user_id: str) -> bool:
+def reset_user_credits(user_id: str):
     try:
         db = SessionLocal()
         user = db.query(User).filter(User.uid == user_id).first()
         if not user:
-            return False
+            return 
         
         if user.subscription_id==1:
             now = datetime.utcnow()
@@ -25,12 +26,21 @@ def reset_user_credits(user_id: str) -> bool:
                 user.last_reset = now
                 db.commit()
                 logger.info(f"Credits reset successfully for user {user_id}. New credits: {user.credits_left}")
-                return True
         else:
-            return False
-    
+            return 
+        
+        cron = db.query(CronJob).filter(CronJob.user_id == user_id, CronJob.status == "active").first()
+        if cron:
+            # Schedule for the same time next day
+            cron.next_run_time = cron.next_run_time + timedelta(minutes=3)
+            db.commit()
+            logger.info(f"Rescheduling next credit reset for user {user_id} at {cron.next_run_time}")
+            schedule_job(db, cron)  # Schedule in APScheduler
+
     except Exception as e:
-        logger.info(f"Error resetting credits for user {user_id}: {str(e)}")
+        logger.error(f"Error resetting credits for user {user_id}: {e}")
         db.rollback()
-        return False
-            
+
+    finally:
+        db.close()
+        

@@ -1,14 +1,13 @@
-import json
+
 from fastapi import APIRouter, Request, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.repo.subscription_repo import SubscriptionRepo
 from app.services.user_service import UserService
 from app.services.subscription_serivce import SubscriptionService
 from app.models.user import User
 from app.config import STRIPE_API_KEY, WEBHOOK_SECRET
 import stripe
-from datetime import datetime
+from app.services.cron_service import CronService
 
 stripe.api_key = STRIPE_API_KEY
 
@@ -58,6 +57,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     new_plan_id=int(plan_id), 
                     stripe_subscription_id=stripe_subscription_id
                 )
+            CronService.deactivate_cron(db, user.uid)
               # Clear metadata after successful update
             stripe.Subscription.modify(
             stripe_subscription_id,

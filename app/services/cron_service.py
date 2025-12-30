@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.models.cron_job import CronJob
 from app.models.user import User
@@ -6,6 +6,7 @@ from importlib import import_module
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging
+from sqlalchemy.exc import IntegrityError
 
 
 
@@ -37,8 +38,7 @@ def schedule_job(db:Session,cron: CronJob):
             trigger=DateTrigger(run_date=cron.next_run_time),
             args=[cron.user_id],
             id=job_id,
-            replace_existing=True,
-            misfire_grace_time= 60 * 60 * 5
+            replace_existing=True
         )
         logger.info(f"Scheduled cron job '{job_id}' for user_id={cron.user_id} at {cron.next_run_time}")
     except Exception as e:
@@ -46,21 +46,23 @@ def schedule_job(db:Session,cron: CronJob):
 
 class CronService:
     @staticmethod
-    def create_cron_for_user(db: Session, user: User):
+    def create_cron_for_user(db: Session, user_id:str):
 
-        cron = db.query(CronJob).filter(CronJob.user_id == user.uid).first()
-
+        cron = db.query(CronJob).filter(CronJob.user_id == user_id).first()
         if cron:
             schedule_job(db,cron)
-            return cron
+            return 
 
-        cron = CronJob(user_id=user.uid,task_path=RESET_TASK,next_run_time=user.created_at + timedelta(minutes=2),status="active")
-        db.add(cron)
-        db.commit()
-        db.refresh(cron)
-        logger.info(f"Created new cron job id={cron.id} for user_id={user.uid}, next_run_time={cron.next_run_time}")
-        schedule_job(db,cron)
-        return cron
+        try:
+            cron = CronJob(user_id=user_id,task_path=RESET_TASK,next_run_time= datetime.now(timezone.utc) + timedelta(minutes=3),status="active")
+            db.add(cron)
+            db.commit()
+            db.refresh(cron)
+            logger.info(f"Created new cron job id={cron.id} for user_id={user_id}, next_run_time={cron.next_run_time}")
+            schedule_job(db,cron)
+        
+        except IntegrityError:
+            db.rollback()
 
     @staticmethod
     def activate_cron(db: Session, user_id: int):
@@ -69,7 +71,7 @@ class CronService:
             return
 
         cron.status = "active"
-        cron.next_run_time = cron.next_run_time + timedelta(days=1)
+        cron.next_run_time = datetime.now(timezone.utc) + timedelta(minutes=3)
         db.commit()
         logger.info(f"Cron job id={cron.id} activated for user_id={user_id}, next_run_time={cron.next_run_time}")
         schedule_job(db,cron)

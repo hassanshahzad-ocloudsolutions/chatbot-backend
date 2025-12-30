@@ -27,9 +27,6 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
     if not uid or not email:
         raise HTTPException(status_code=401, detail="Invalid Firebase token")
 
-    #clearing the cache to prevent integrity issues
-    db.rollback()
-    db.expunge_all() 
     user = db.query(User).filter(User.uid == uid).first()
 
 
@@ -67,16 +64,15 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
             db.add(user)
             db.commit()
             db.refresh(user)
-            CronService.create_cron_for_user(db, user)
         
         except IntegrityError:
             # Race condition: user was created by another request
             db.rollback()
-            db.expunge_all()
-            
             # Fetch the user that was just created
             user = db.query(User).filter(User.uid == uid).first()
-            
+
+        CronService.create_cron_for_user(db, user_id=user.uid)
+
     return user
 
 

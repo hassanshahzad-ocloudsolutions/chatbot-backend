@@ -1,4 +1,5 @@
 
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI
 from app.database import Base, engine
 from app.models import user, chat, message
@@ -6,6 +7,9 @@ from app.routers import chat, subscription, webhook, voice_recording_transcripti
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
+from app.database import SessionLocal
+from app.models.cron_job import CronJob
+from app.services.cron_service import schedule_job
 
 # Load environment variables from .env
 load_dotenv()
@@ -18,6 +22,21 @@ app.include_router(subscription.router)
 app.include_router(webhook.router)
 app.include_router(voice_recording_transcription.router)
 app.include_router(user.router)
+
+#when server restarts the scheduler again starts so schedule all jobs to be run
+@app.on_event("startup")
+def schedule_all_jobs():
+    db = SessionLocal()
+    now = datetime.now(timezone.utc)
+    crons = db.query(CronJob).filter(CronJob.status=="active").all()
+    
+    for cron in crons:
+        # If next_run_time is in the past (server was down)
+        while cron.next_run_time and cron.next_run_time < now:
+            cron.next_run_time += timedelta(minutes=3) 
+
+        db.commit()
+        schedule_job(db, cron)
 
 # Allow frontend origin
 origins = [
