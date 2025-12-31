@@ -15,11 +15,9 @@ def get_plans(db: Session = Depends(get_db)):
 
 @router.post("/subscribe/{plan_id}")
 def subscribe_plan(plan_id: int, db: Session = Depends(get_db),user: User = Depends(get_current_user)):
-    success_url = "http://localhost:8000/payment/success"
-    cancel_url = "http://localhost:8000/payment/success/failure"
+    success_url = "https://neural-chat-ui.vercel.app/payment/success"
+    cancel_url = "https://neural-chat-ui.vercel.app/payment/failed"
 
-    #"https://neural-chat-ui.vercel.app/payment/success"
-    #"https://neural-chat-ui.vercel.app/payment/failed"
     try:
         return SubscriptionService.subscribe_user_service(db, user, plan_id, success_url, cancel_url)
     except ValueError as e:
